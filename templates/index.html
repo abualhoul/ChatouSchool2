@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    
+    <!-- Mobile App PWA Meta Tags (No Service Worker) -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/static/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Menu Chatou">
+    <meta name="theme-color" content="#FAF8F5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0F172A" media="(prefers-color-scheme: dark)">
+
     <title>Menus scolaires · Chatou</title>
 
     <!-- Tailwind CSS with Dark Mode -->
@@ -76,7 +86,7 @@
         }
         .accordion-content.expanded { max-height: 250px; opacity: 1; }
 
-        /* Strict Image Protection against download / right-click / open in new tab */
+        /* Full Logo Protection */
         .protected-img {
             pointer-events: none !important;
             user-select: none !important;
@@ -104,10 +114,9 @@
 
     <div class="max-w-4xl w-full mx-auto px-3.5 sm:px-6 pt-5 sm:pt-8 pb-12 sm:pb-16 space-y-4 sm:space-y-6">
 
-        <!-- Top Header with Protected Circular Logo -->
+        <!-- Header -->
         <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-1">
             <div class="flex items-center gap-3">
-                <!-- Protected Logo (Cannot be dragged, right-clicked, or opened in new tab) -->
                 <div class="protected-wrapper flex-shrink-0 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" oncontextmenu="return false;">
                     <img src="/static/logo.png" 
                          alt="Logo" 
@@ -127,19 +136,28 @@
                 </div>
             </div>
 
-            <!-- Controls: Dark Mode, Language Selector & Refresh -->
+            <!-- Controls: Dark Mode, Language Selector, Native App Install & Refresh -->
             <div class="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+                <!-- Native App Download Button -->
+                <button onclick="showInstallGuide()" id="install-app-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0E6061] text-white text-xs font-semibold shadow-xs active:scale-95 transition min-h-[38px]">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span id="txt-app-btn">App</span>
+                </button>
+
+                <!-- Dark Mode Button -->
                 <button onclick="toggleDarkMode()" id="dark-toggle-btn" aria-label="Dark mode" class="min-h-[38px] min-w-[38px] p-2 rounded-full bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition flex items-center justify-center shadow-xs">
                     <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
                     <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
                 </button>
 
+                <!-- Language Switcher -->
                 <div class="flex items-center bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 rounded-full p-0.5 sm:p-1 text-xs font-semibold shadow-xs">
                     <button onclick="setLang('fr')" id="lang-fr" class="px-2.5 py-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition min-h-[32px]">FR</button>
                     <button onclick="setLang('en')" id="lang-en" class="px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition min-h-[32px]">EN</button>
                     <button onclick="setLang('ar')" id="lang-ar" class="px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition min-h-[32px]">العربية</button>
                 </div>
 
+                <!-- Refresh Button -->
                 <button onclick="loadMenuData()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-[#E8E4DC] dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 active:scale-95 transition shadow-xs min-h-[38px]">
                     <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                     <span id="txt-refresh" class="hidden xs:inline">Actualiser</span>
@@ -147,7 +165,7 @@
             </div>
         </header>
 
-        <!-- Yvelines (78) Calendar Banner -->
+        <!-- Yvelines Calendar Banner -->
         <div id="calendar-banner" class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 flex flex-col xs:flex-row items-start xs:items-center justify-between text-xs gap-1.5 shadow-xs">
             <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
@@ -157,7 +175,7 @@
             <span class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Académie de Versailles · Chatou</span>
         </div>
 
-        <!-- Chatou (78400) Live Weather -->
+        <!-- Chatou Weather Banner -->
         <section id="weather-banner" class="bg-gradient-to-r from-sky-50 via-white to-amber-50/70 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-sky-100/80 dark:border-slate-700 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-xs transition-all">
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                 <div class="flex items-center gap-2.5">
@@ -242,7 +260,7 @@
                     </div>
                 </div>
 
-                <!-- Structured Meal Table: Never row-shifted -->
+                <!-- Structured Meal Table -->
                 <div class="space-y-2 sm:space-y-3 pt-1 sm:pt-2 text-xs sm:text-sm border-t border-amber-900/10 dark:border-slate-700">
                     <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
                         <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-plat">PLAT</span>
@@ -260,14 +278,14 @@
                         <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-dessert">DESSERT</span>
                         <div class="xs:w-2/3 flex items-center gap-2">
                             <span class="text-slate-700 dark:text-slate-300" id="val-dessert">Fruit de saison bio</span>
-                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
+                            <span class="bio-badge-text text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
                         </div>
                     </div>
                     <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 gap-0.5">
                         <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-pain">PAIN</span>
                         <div class="xs:w-2/3 flex items-center gap-2">
                             <span class="text-slate-700 dark:text-slate-300" id="val-pain">Baguette bio</span>
-                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
+                            <span class="bio-badge-text text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
                         </div>
                     </div>
                 </div>
@@ -286,7 +304,7 @@
                 <div id="rest-of-week-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"></div>
                 <div>
                     <button onclick="switchView('month', true)" class="min-h-[44px] text-xs font-bold text-[#0E6061] dark:text-[#38BDF8] hover:underline flex items-center gap-1.5 py-1">
-                        <span id="txt-view-month-link">Voir tout le mois</span> →
+                        <span id="txt-view-month-link">Voir tout le mois →</span>
                     </button>
                 </div>
             </section>
@@ -299,7 +317,7 @@
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1" id="month-count">25 repas au menu</p>
             </div>
 
-            <!-- The 4 Stat Cards: Poisson (7), Végétarien (4), Volaille (7), Viande / porc (7) -->
+            <!-- The 4 Stat Cards -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
                 <div class="bg-[#E1F7EF] dark:bg-teal-950/40 border border-[#CCEFE2] dark:border-teal-800/40 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between">
                     <span class="text-lg sm:text-xl">🐟</span>
@@ -362,7 +380,7 @@
                 </div>
             </div>
 
-            <!-- Signature Card: Protected Children's Badge Logo + Caveat Font -->
+            <!-- Signature Card -->
             <div class="bg-white/95 dark:bg-slate-800/95 border border-[#E8E4DC] dark:border-slate-700 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-3">
                     <div class="protected-wrapper flex-shrink-0" oncontextmenu="return false;">
@@ -389,13 +407,14 @@
         </div>
     </footer>
 
-    <!-- App JavaScript Engine -->
+    <!-- Multilingual UI & Native PWA Scripts -->
     <script>
         const I18N = {
             fr: {
                 title_prefix: "Menus scolaires",
                 subtitle: "Le menu de la cantine, clair en un coup d'œil",
                 refresh: "Actualiser",
+                app_btn: "App",
                 tab_upcoming: "À venir",
                 tab_month: "Mois",
                 lbl_calendar: "CALENDRIER SCOLAIRE",
@@ -409,9 +428,11 @@
                 fromage: "FROMAGE / LAITAGE",
                 dessert: "DESSERT",
                 pain: "PAIN",
+                val_pain: "Baguette bio",
+                bio_tag: "BIO",
                 analysis: "Analyse du menu : ",
                 rest_week: "Reste de la semaine",
-                view_month_link: "Voir tout le mois",
+                view_month_link: "Voir tout le mois →",
                 meals_count: "repas au menu",
                 stat_poi: "Poisson",
                 stat_veg: "Végétarien",
@@ -426,12 +447,13 @@
                 page_resto: "Page restauration municipale",
                 live_sync: "Données en direct",
                 disclaimer: "Classement indicatif.",
-                credit_prefix: "Provided by the parents of"
+                credit_prefix: "Proposé avec ❤️ par les parents de"
             },
             en: {
                 title_prefix: "School Menus",
                 subtitle: "School canteen menu, clear at a glance",
                 refresh: "Refresh",
+                app_btn: "App",
                 tab_upcoming: "Upcoming",
                 tab_month: "Month",
                 lbl_calendar: "SCHOOL CALENDAR",
@@ -445,9 +467,11 @@
                 fromage: "CHEESE / DAIRY",
                 dessert: "DESSERT",
                 pain: "BREAD",
+                val_pain: "Organic Baguette",
+                bio_tag: "BIO",
                 analysis: "Menu analysis: ",
                 rest_week: "Rest of the week",
-                view_month_link: "View whole month",
+                view_month_link: "View whole month →",
                 meals_count: "meals on menu",
                 stat_poi: "Fish",
                 stat_veg: "Vegetarian",
@@ -462,12 +486,13 @@
                 page_resto: "Municipal catering page",
                 live_sync: "Live data",
                 disclaimer: "Indicative classification.",
-                credit_prefix: "Provided by the parents of"
+                credit_prefix: "Provided with ❤️ by the parents of"
             },
             ar: {
                 title_prefix: "قوائم الوجبات المدرسية",
                 subtitle: "قائمة مطعم المدرسة، واضحة بلمحة بصر",
                 refresh: "تحديث",
+                app_btn: "تطبيق",
                 tab_upcoming: "القادمة",
                 tab_month: "الشهر",
                 lbl_calendar: "التقويم المدرسي",
@@ -481,9 +506,11 @@
                 fromage: "أجبان / ألبان",
                 dessert: "التحلية",
                 pain: "الخبز",
+                val_pain: "خبز باغيت عضوي",
+                bio_tag: "عضوي",
                 analysis: "تحليل القائمة: ",
                 rest_week: "بقية أيام الأسبوع",
-                view_month_link: "عرض الشهر كاملاً",
+                view_month_link: "عرض الشهر كاملاً ←",
                 meals_count: "وجبة في القائمة",
                 stat_poi: "سمك",
                 stat_veg: "نباتي",
@@ -498,16 +525,63 @@
                 page_resto: "صفحة الإطعام البلدي الرسمي",
                 live_sync: "بيانات حية",
                 disclaimer: "تصنيف استرشادي.",
-                credit_prefix: "Provided by the parents of"
+                credit_prefix: "مقدم بكل ❤️ من والدي"
             }
         };
+
+        const MONTH_NAMES_MAP = {
+            fr: { "janvier": "Janvier", "février": "Février", "mars": "Mars", "avril": "Avril", "mai": "Mai", "juin": "Juin", "juillet": "Juillet", "août": "Août", "septembre": "Septembre", "octobre": "Octobre", "novembre": "Novembre", "décembre": "Décembre" },
+            en: { "janvier": "January", "février": "February", "mars": "March", "avril": "April", "mai": "May", "juin": "June", "juillet": "July", "août": "August", "septembre": "September", "octobre": "October", "novembre": "November", "décembre": "December" },
+            ar: { "janvier": "يناير", "février": "فبراير", "mars": "مارس", "avril": "أبريل", "mai": "مايو", "juin": "يونيو", "juillet": "يوليو", "août": "أغسطس", "septembre": "سبتمبر", "octobre": "أكتوبر", "novembre": "نوفمبر", "décembre": "ديسمبر" }
+        };
+
+        const CANTEEN_FALLBACK_TERMS = [
+            { fr: /sauce citronn[eé]e/gi, en: "lemon sauce", ar: "صلصة الليمون" },
+            { fr: /sauce tomate/gi, en: "tomato sauce", ar: "صلصة الطماطم" },
+            { fr: /pur[eé]e de pommes de terre/gi, en: "mashed potatoes", ar: "بطاطس مهروسة" },
+            { fr: /haricots verts/gi, en: "green beans", ar: "فاصوليا خضراء" },
+            { fr: /fruit de saison/gi, en: "seasonal fruit", ar: "فواكه موسمية" },
+            { fr: /compote de pommes/gi, en: "apple compote", ar: "كومبوت تفاح" },
+            { fr: /escalope de porc/gi, en: "pork escalope", ar: "شريحة لحم خنزير" },
+            { fr: /escalope de volaille/gi, en: "poultry escalope", ar: "شريحة دجاج" },
+            { fr: /r[oô]ti de boeuf/gi, en: "roast beef", ar: "روست بيف مشوي" },
+            { fr: /r[oô]ti de dinde/gi, en: "roast turkey", ar: "روستو ديك رومي" },
+            { fr: /poisson/gi, en: "fish", ar: "سمك" },
+            { fr: /poulet/gi, en: "chicken", ar: "دجاج" },
+            { fr: /volaille/gi, en: "poultry", ar: "دواجن" },
+            { fr: /boeuf/gi, en: "beef", ar: "لحم بقري" },
+            { fr: /porc/gi, en: "pork", ar: "لحم خنزير" },
+            { fr: /riz/gi, en: "rice", ar: "أرز" },
+            { fr: /bio/gi, en: "organic", ar: "عضوي" }
+        ];
 
         let currentLang = 'fr';
         let currentView = 'upcoming';
         let currentFilter = 'all';
         let appData = null;
+        let deferredPrompt = null;
 
-        // Prevent context menu on protected logos across browser interactions
+        // Capture Android/Desktop PWA installation event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        function showInstallGuide() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+            } else {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                if (isIOS) {
+                    alert("Pour installer sur iPhone :\n1. Touchez le bouton Partager (icône avec flèche vers le haut).\n2. Sélectionnez 'Sur l'écran d'accueil'.");
+                } else {
+                    alert("Pour installer sur Android :\nTouchez les 3 points en haut à droite de Chrome, puis 'Installer l'application' ou 'Ajouter à l'écran d'accueil'.");
+                }
+            }
+        }
+
+        // Prevent context menus on protected logos
         document.addEventListener('contextmenu', function(e) {
             if (e.target.closest('.protected-wrapper') || e.target.classList.contains('protected-img')) {
                 e.preventDefault();
@@ -548,6 +622,52 @@
             document.getElementById('val-calendar-status').textContent = msg;
         }
 
+        function translateDynamicText(text, lang) {
+            if (!text || lang === 'fr') return text;
+            let result = text;
+            for (const item of CANTEEN_FALLBACK_TERMS) {
+                const target = (lang === 'ar') ? item.ar : item.en;
+                result = result.replace(item.fr, target);
+            }
+            return result;
+        }
+
+        function getI18nText(item, field) {
+            if (!item) return '';
+            const key = `${field}_${currentLang}`;
+            if (item[key]) return item[key];
+            const frText = item[`${field}_fr`] || item[field] || '';
+            if (currentLang === 'fr') return frText;
+            return translateDynamicText(frText, currentLang);
+        }
+
+        function getCategoryBadgeText(cat, hasOption) {
+            const map = {
+                poisson: { fr: "Poisson", en: "Fish", ar: "سمك" },
+                vegetarien: { fr: "Végétarien", en: "Vegetarian", ar: "نباتي" },
+                volaille: { fr: "Volaille", en: "Poultry", ar: "دواجن" },
+                viande: { fr: "Viande", en: "Meat", ar: "لحم" },
+                porc: { fr: "Porc", en: "Pork", ar: "لحم خنزير" },
+            };
+            const base = (map[cat] && map[cat][currentLang]) || map.viande[currentLang];
+            if (hasOption) {
+                return currentLang === 'ar' ? `${base} ؟` : `${base} ?`;
+            }
+            return base;
+        }
+
+        function formatLocalizedMonthTitle(title) {
+            if (!title) return (currentLang === 'ar' ? 'أكتوبر 2026' : (currentLang === 'en' ? 'October 2026' : 'Octobre 2026'));
+            const parts = title.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                const mKey = parts[0].toLowerCase();
+                const year = parts[1];
+                const mTrans = (MONTH_NAMES_MAP[currentLang] && MONTH_NAMES_MAP[currentLang][mKey]) || parts[0];
+                return `${mTrans} ${year}`;
+            }
+            return title;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             evaluateLocalCalendar();
             loadMenuData();
@@ -578,7 +698,6 @@
             });
 
             applyTranslations();
-            evaluateLocalCalendar();
             renderUI();
         }
 
@@ -587,6 +706,7 @@
             document.getElementById('txt-title-prefix').textContent = t.title_prefix;
             document.getElementById('txt-subtitle').textContent = t.subtitle;
             document.getElementById('txt-refresh').textContent = t.refresh;
+            document.getElementById('txt-app-btn').textContent = t.app_btn;
             document.getElementById('txt-tab-upcoming').textContent = t.tab_upcoming;
             document.getElementById('txt-tab-month').textContent = t.tab_month;
             document.getElementById('lbl-calendar').textContent = t.lbl_calendar;
@@ -614,6 +734,10 @@
             document.getElementById('flt-por').textContent = t.flt_por;
             document.getElementById('footer-resto-link').textContent = t.page_resto;
             document.getElementById('footer-credit-prefix').textContent = t.credit_prefix;
+
+            document.querySelectorAll('.bio-badge-text').forEach(el => {
+                el.textContent = t.bio_tag;
+            });
         }
 
         function switchView(view, scrollToTop = false) {
@@ -659,7 +783,7 @@
             elTodayIcon.className = `text-xl sm:text-2xl select-none flex-shrink-0 ${todayIcon.anim}`;
             document.getElementById('temp-weather-today').textContent = `${w.today.temp}°C`;
             document.getElementById('range-weather-today').textContent = `${w.today.temp_min}° / ${w.today.temp_max}°`;
-            document.getElementById('desc-weather-today').textContent = w.today.condition[currentLang] || w.today.condition.fr;
+            document.getElementById('desc-weather-today').textContent = (w.today.condition && (w.today.condition[currentLang] || w.today.condition.fr)) || '';
 
             const tomoIcon = getWeatherIcon(w.tomorrow.condition.type);
             const elTomoIcon = document.getElementById('icon-weather-tomorrow');
@@ -667,7 +791,7 @@
             elTomoIcon.className = `text-xl sm:text-2xl select-none flex-shrink-0 ${tomoIcon.anim}`;
             document.getElementById('temp-weather-tomorrow').textContent = `${w.tomorrow.temp_max}°C`;
             document.getElementById('range-weather-tomorrow').textContent = `${w.tomorrow.temp_min}° / ${w.tomorrow.temp_max}°`;
-            document.getElementById('desc-weather-tomorrow').textContent = w.tomorrow.condition[currentLang] || w.tomorrow.condition.fr;
+            document.getElementById('desc-weather-tomorrow').textContent = (w.tomorrow.condition && (w.tomorrow.condition[currentLang] || w.tomorrow.condition.fr)) || '';
         }
 
         function renderUI() {
@@ -677,12 +801,16 @@
             document.getElementById('footer-pdf-link').href = appData.pdf_url;
             document.getElementById('footer-live-sync').textContent = `${I18N[currentLang].live_sync} · ${appData.updated_at}`;
 
-            if (appData.month_title) {
-                document.getElementById('month-title').textContent = appData.month_title;
-            }
+            document.getElementById('month-title').textContent = formatLocalizedMonthTitle(appData.month_title);
 
             if (appData.weather) {
                 renderWeather(appData.weather);
+            }
+
+            if (appData.calendar) {
+                document.getElementById('val-calendar-status').textContent = appData.calendar[currentLang] || appData.calendar.fr;
+            } else {
+                evaluateLocalCalendar();
             }
 
             if (appData.stats) {
@@ -693,7 +821,7 @@
                 document.getElementById('month-count').textContent = `${appData.stats.total_meals} ${I18N[currentLang].meals_count}`;
             }
 
-            // Correctly locate tomorrow's meal without row shift
+            // Identify tomorrow's featured meal
             let tomorrowDay = null;
             let restDays = [];
             for (const w of appData.weeks) {
@@ -712,15 +840,17 @@
             }
 
             if (tomorrowDay) {
-                document.getElementById('hero-date').textContent = tomorrowDay.date_fr;
-                document.getElementById('hero-plat-title').textContent = tomorrowDay.plat;
-                document.getElementById('val-plat').textContent = tomorrowDay.plat;
-                document.getElementById('val-accomp').textContent = tomorrowDay.accompagnement;
-                document.getElementById('val-fromage').textContent = tomorrowDay.fromage;
-                document.getElementById('val-dessert').textContent = tomorrowDay.dessert;
-                document.getElementById('val-pain').textContent = "Baguette bio";
-                document.getElementById('hero-plat-badge').textContent = tomorrowDay.badge_fr;
-                document.getElementById('hero-analysis').textContent = `${I18N[currentLang].analysis} ${tomorrowDay.badge_fr}`;
+                document.getElementById('hero-date').textContent = getI18nText(tomorrowDay, 'date');
+                document.getElementById('hero-plat-title').textContent = getI18nText(tomorrowDay, 'plat');
+                document.getElementById('val-plat').textContent = getI18nText(tomorrowDay, 'plat');
+                document.getElementById('val-accomp').textContent = getI18nText(tomorrowDay, 'accompagnement');
+                document.getElementById('val-fromage').textContent = getI18nText(tomorrowDay, 'fromage');
+                document.getElementById('val-dessert').textContent = getI18nText(tomorrowDay, 'dessert');
+                document.getElementById('val-pain').textContent = I18N[currentLang].val_pain;
+                
+                const badgeLabel = getCategoryBadgeText(tomorrowDay.cat, tomorrowDay.has_option);
+                document.getElementById('hero-plat-badge').textContent = badgeLabel;
+                document.getElementById('hero-analysis').textContent = `${I18N[currentLang].analysis} ${badgeLabel}`;
             }
 
             const restGrid = document.getElementById('rest-of-week-grid');
@@ -755,15 +885,15 @@
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
                         <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${chipBg} flex flex-col items-center justify-center flex-shrink-0 text-center leading-tight">
-                            <span class="text-[8px] sm:text-[9px] font-extrabold uppercase">${day.day_short_fr}</span>
+                            <span class="text-[8px] sm:text-[9px] font-extrabold uppercase">${getI18nText(day, 'day_short')}</span>
                             <span class="text-sm sm:text-base font-extrabold">${day.day_num}</span>
-                            <span class="text-[7px] sm:text-[8px] uppercase tracking-tighter">${day.month_fr}</span>
+                            <span class="text-[7px] sm:text-[8px] uppercase tracking-tighter">${getI18nText(day, 'month')}</span>
                         </div>
                         <div class="min-w-0">
-                            <h4 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">${day.plat}</h4>
+                            <h4 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">${getI18nText(day, 'plat')}</h4>
                             <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold ${pillBg} mt-0.5 sm:mt-1">
                                 <span>${day.icon}</span>
-                                <span>${day.badge_fr}</span>
+                                <span>${getCategoryBadgeText(day.cat, day.has_option)}</span>
                             </div>
                         </div>
                     </div>
@@ -771,9 +901,9 @@
                 </div>
                 <div class="accordion-content border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-1">
                     <div class="pt-2.5 mt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
-                        <p><strong>${I18N[currentLang].accomp}:</strong> ${day.accompagnement || '-'}</p>
-                        <p><strong>${I18N[currentLang].fromage}:</strong> ${day.fromage || '-'}</p>
-                        <p><strong>${I18N[currentLang].dessert}:</strong> ${day.dessert || '-'}</p>
+                        <p><strong>${I18N[currentLang].accomp}:</strong> ${getI18nText(day, 'accompagnement') || '-'}</p>
+                        <p><strong>${I18N[currentLang].fromage}:</strong> ${getI18nText(day, 'fromage') || '-'}</p>
+                        <p><strong>${I18N[currentLang].dessert}:</strong> ${getI18nText(day, 'dessert') || '-'}</p>
                     </div>
                 </div>
             `;
@@ -808,7 +938,7 @@
                 const weekGroup = document.createElement('div');
                 weekGroup.className = "space-y-2 sm:space-y-3";
                 weekGroup.innerHTML = `
-                    <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">${w.week_label_fr}</h3>
+                    <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">${getI18nText(w, 'week_label')}</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4"></div>
                 `;
 
