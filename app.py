@@ -7,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 import pdfplumber
 from urllib.parse import urljoin
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, send_from_directory
 
 app = Flask(__name__, static_folder='static')
 
@@ -15,6 +15,27 @@ CHATOU_URL = "https://www.chatou.fr/vivre-a-chatou/enfance-et-education/la-resta
 CHATOU_LAT = 48.8967
 CHATOU_LON = 2.1578
 DAYS_FR = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi']
+
+MONTH_PATTERNS = {
+    1: ['janv', 'janvier', 'jan'],
+    2: ['fevr', 'févr', 'fevrier', 'février', 'feb'],
+    3: ['mars', 'mar'],
+    4: ['avr', 'avril', 'apr'],
+    5: ['mai', 'may'],
+    6: ['juin', 'jun'],
+    7: ['juil', 'juillet', 'jul'],
+    8: ['aout', 'août', 'aug'],
+    9: ['sept', 'septembre', 'sep'],
+    10: ['oct', 'octobre'],
+    11: ['nov', 'novembre', 'novomb', 'novomber'],
+    12: ['dec', 'déc', 'decembre', 'décembre']
+}
+
+FRENCH_MONTH_NAMES = {
+    1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril",
+    5: "Mai", 6: "Juin", 7: "Juillet", 8: "Août",
+    9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre"
+}
 
 MENU_CACHE = {
     "pdf_url": None,
@@ -32,7 +53,6 @@ WEATHER_CACHE = {
 }
 
 def get_yvelines_calendar_status():
-    """Evaluates Académie de Versailles (Zone C - Yvelines 78) school calendar."""
     dt = datetime.date.today()
     weekday = dt.weekday()
     if weekday in [5, 6]:
@@ -62,7 +82,7 @@ def get_chatou_weather():
     global WEATHER_CACHE
     now = datetime.datetime.now()
     if WEATHER_CACHE["data"] and WEATHER_CACHE["timestamp"]:
-        if (now - WEATHER_CACHE["timestamp"]).total_seconds() < 900:  # 15 minutes cache
+        if (now - WEATHER_CACHE["timestamp"]).total_seconds() < 900:
             return WEATHER_CACHE["data"]
 
     try:
@@ -105,11 +125,28 @@ def get_chatou_weather():
             "tomorrow": {"temp_max": 17, "temp_min": 10, "condition": {"type": "partly-cloudy", "fr": "Éclaircies", "en": "Partly Cloudy", "ar": "غائم جزئياً"}}
         }
 
+def extract_date_info_from_string(text):
+    text_l = text.lower()
+    year = None
+    month_num = None
+
+    year_match = re.search(r'\b(202\d)\b', text_l)
+    if year_match:
+        year = int(year_match.group(1))
+
+    for m_num, aliases in MONTH_PATTERNS.items():
+        for alias in aliases:
+            if re.search(r'(?:^|[-_ \.\b])' + alias, text_l):
+                month_num = m_num
+                break
+        if month_num:
+            break
+
+    return month_num, year
+
 def find_active_school_pdf_url():
     """
-    Specifically targets 'Menu scolaires' from the municipal page.
-    Strictly excludes 'Menu crèches' and 'petite enfance'.
-    Month and date can change dynamically.
+    Finds the latest/upcoming school menu PDF, filtering out crèche links.
     """
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
@@ -117,24 +154,42 @@ def find_active_school_pdf_url():
         res.raise_for_status()
         soup = BeautifulSoup(res.text, 'html.parser')
 
+        candidates = []
         for a in soup.find_all('a', href=True):
-            text = a.get_text().strip().lower()
-            href = a['href'].strip().lower()
-            
-            if not href.endswith('.pdf'):
+            text = a.get_text().strip()
+            href = a['href'].strip()
+            combo = f"{text} {href}".lower()
+
+            if not href.lower().endswith('.pdf'):
                 continue
-            
-            # Strictly reject crèches and nursery
-            if any(k in text or k in href for k in ['creche', 'crèche', 'creches', 'crèches', 'petite enfance', 'halte-garderie']):
+
+            if any(k in combo for k in ['creche', 'crèche', 'creches', 'crèches', 'petite enfance', 'halte-garderie']):
                 continue
-                
-            # Strictly accept school menus
-            if 'scolaire' in text or 'scolaire' in href or 'scolaires' in text:
-                return urljoin("https://www.chatou.fr", a['href'])
-                
+
+            if 'scolaire' in combo or 'cantine' in combo or 'menu' in combo:
+                full_url = urljoin("https://www.chatou.fr", href)
+                filename = href.split('/')[-1]
+                m_num, year = extract_date_info_from_string(f"{text} {filename}")
+                candidates.append({
+                    "url": full_url,
+                    "filename": filename,
+                    "month": m_num or 0,
+                    "year": year or datetime.date.today().year
+                })
+
+        if not candidates:
+            return None, None, None
+
+        candidates.sort(key=lambda c: (c["year"], c["month"]), reverse=True)
+        best = candidates[0]
+        month_name = FRENCH_MONTH_NAMES.get(best["month"], "Mois")
+        month_title = f"{month_name} {best['year']}" if best["month"] else best["filename"]
+
+        return best["url"], best["filename"], month_title
+
     except Exception as err:
         print(f"[Scraper] Warning: {err}")
-    return None
+        return None, None, None
 
 def classify_dish(dish_name):
     nl = dish_name.lower()
@@ -174,11 +229,9 @@ def classify_dish(dish_name):
         "has_option": has_option
     }
 
-def get_verified_month_dataset():
+def get_verified_multilingual_month_dataset():
     """
-    Master verified 25-meal school schedule:
-    7 Poisson, 4 Végétarien, 7 Volaille, 7 Viande/porc = 25 repas.
-    Guarantees no row shifting (Starters never replace Main Dishes).
+    Complete 25-meal schedule with full French, English, and Arabic content.
     """
     return [
         {
@@ -186,11 +239,56 @@ def get_verified_month_dataset():
             "week_label_en": "WEEK OF SEPTEMBER 28",
             "week_label_ar": "أسبوع 28 سبتمبر",
             "days": [
-                { "day_short_fr": "LUN", "day_num": "28", "month_fr": "SEPT.", "date_fr": "Lundi 28 Septembre", "plat": "Cabillaud sauce citronnée", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Riz bio de Camargue", "fromage": "Fromage blanc bio", "dessert": "Poire de saison" },
-                { "day_short_fr": "MAR", "day_num": "29", "month_fr": "SEPT.", "date_fr": "Mardi 29 Septembre", "plat": "Nuggets de poulet ketchup", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Haricots verts extra-fins", "fromage": "Kiri", "dessert": "Compote bio pomme fraise" },
-                { "day_short_fr": "MER", "day_num": "30", "month_fr": "SEPT.", "date_fr": "Mercredi 30 Septembre", "plat": "Rôti de boeuf", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Purée de pommes de terre", "fromage": "Emmental", "dessert": "Pomme bio" },
-                { "day_short_fr": "JEU", "day_num": "1", "month_fr": "OCT.", "date_fr": "Jeudi 1er Octobre", "plat": "Escalope de porc / volaille...", "cat": "porc", "badge_type": "pink", "icon": "🥩", "badge_fr": "Porc ?", "accompagnement": "Carottes vichy bio", "fromage": "Gouda AOP", "dessert": "Flan pâtissier" },
-                { "day_short_fr": "VEN", "day_num": "2", "month_fr": "OCT.", "date_fr": "Vendredi 2 Octobre", "plat": "Tortellinis au fromage", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Salade verte bio", "fromage": "Petit Suisse", "dessert": "Fruit de saison" }
+                {
+                    "day_short_fr": "LUN", "day_short_en": "MON", "day_short_ar": "الإثنين",
+                    "day_num": "28", "month_fr": "SEPT.", "month_en": "SEP.", "month_ar": "سبتمبر",
+                    "date_fr": "Lundi 28 Septembre", "date_en": "Monday, September 28", "date_ar": "الإثنين 28 سبتمبر",
+                    "plat_fr": "Cabillaud sauce citronnée", "plat_en": "Lemon Cod Fillet", "plat_ar": "سمك القد بصلصة الليمون",
+                    "cat": "poisson", "badge_type": "teal", "icon": "🐟",
+                    "accompagnement_fr": "Riz bio de Camargue", "accompagnement_en": "Organic Camargue Rice", "accompagnement_ar": "أرز كامارغ عضوي",
+                    "fromage_fr": "Fromage blanc bio", "fromage_en": "Organic Fromage Blanc", "fromage_ar": "جبن طازج عضوي",
+                    "dessert_fr": "Poire de saison", "dessert_en": "Seasonal Pear", "dessert_ar": "كمثرى موسمية"
+                },
+                {
+                    "day_short_fr": "MAR", "day_short_en": "TUE", "day_short_ar": "الثلاثاء",
+                    "day_num": "29", "month_fr": "SEPT.", "month_en": "SEP.", "month_ar": "سبتمبر",
+                    "date_fr": "Mardi 29 Septembre", "date_en": "Tuesday, September 29", "date_ar": "الثلاثاء 29 سبتمبر",
+                    "plat_fr": "Nuggets de poulet ketchup", "plat_en": "Chicken Nuggets with Ketchup", "plat_ar": "ناجتس دجاج مع كاتشب",
+                    "cat": "volaille", "badge_type": "yellow", "icon": "🍗",
+                    "accompagnement_fr": "Haricots verts extra-fins", "accompagnement_en": "Extra-Fine Green Beans", "accompagnement_ar": "فاصوليا خضراء رفيعة",
+                    "fromage_fr": "Kiri", "fromage_en": "Kiri Cheese", "fromage_ar": "جبن كيري",
+                    "dessert_fr": "Compote bio pomme fraise", "dessert_en": "Organic Apple-Strawberry Compote", "dessert_ar": "كومبوت تفاح وفراولة عضوي"
+                },
+                {
+                    "day_short_fr": "MER", "day_short_en": "WED", "day_short_ar": "الأربعاء",
+                    "day_num": "30", "month_fr": "SEPT.", "month_en": "SEP.", "month_ar": "سبتمبر",
+                    "date_fr": "Mercredi 30 Septembre", "date_en": "Wednesday, September 30", "date_ar": "الأربعاء 30 سبتمبر",
+                    "plat_fr": "Rôti de boeuf", "plat_en": "Roast Beef", "plat_ar": "روست بيف مشوي",
+                    "cat": "viande", "badge_type": "pink", "icon": "🥩",
+                    "accompagnement_fr": "Purée de pommes de terre", "accompagnement_en": "Mashed Potatoes", "accompagnement_ar": "بطاطس مهروسة",
+                    "fromage_fr": "Emmental", "fromage_en": "Emmental Cheese", "fromage_ar": "جبن إيمنتال",
+                    "dessert_fr": "Pomme bio", "dessert_en": "Organic Apple", "dessert_ar": "تفاح عضوي"
+                },
+                {
+                    "day_short_fr": "JEU", "day_short_en": "THU", "day_short_ar": "الخميس",
+                    "day_num": "1", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Jeudi 1er Octobre", "date_en": "Thursday, October 1", "date_ar": "الخميس 1 أكتوبر",
+                    "plat_fr": "Escalope de porc / volaille...", "plat_en": "Pork Escalope / Poultry...", "plat_ar": "شريحة لحم خنزير / دجاج...",
+                    "cat": "porc", "badge_type": "pink", "icon": "🥩", "has_option": True,
+                    "accompagnement_fr": "Carottes vichy bio", "accompagnement_en": "Organic Vichy Carrots", "accompagnement_ar": "جزر فيشي عضوي",
+                    "fromage_fr": "Gouda AOP", "fromage_en": "PDO Gouda", "fromage_ar": "جبن غودا",
+                    "dessert_fr": "Flan pâtissier", "dessert_en": "Custard Tart", "dessert_ar": "تارت الكاسترد"
+                },
+                {
+                    "day_short_fr": "VEN", "day_short_en": "FRI", "day_short_ar": "الجمعة",
+                    "day_num": "2", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Vendredi 2 Octobre", "date_en": "Friday, October 2", "date_ar": "الجمعة 2 أكتوبر",
+                    "plat_fr": "Tortellinis au fromage", "plat_en": "Cheese Tortellini", "plat_ar": "تورتيليني بالجبن",
+                    "cat": "vegetarien", "badge_type": "green", "icon": "🌱",
+                    "accompagnement_fr": "Salade verte bio", "accompagnement_en": "Organic Green Salad", "accompagnement_ar": "سلطة خضراء عضوية",
+                    "fromage_fr": "Petit Suisse", "fromage_en": "Petit Suisse", "fromage_ar": "جبن بتي سويس",
+                    "dessert_fr": "Fruit de saison", "dessert_en": "Seasonal Fruit", "dessert_ar": "فواكه موسمية"
+                }
             ]
         },
         {
@@ -198,11 +296,56 @@ def get_verified_month_dataset():
             "week_label_en": "WEEK OF OCTOBER 5",
             "week_label_ar": "أسبوع 5 أكتوبر",
             "days": [
-                { "day_short_fr": "LUN", "day_num": "5", "month_fr": "OCT.", "date_fr": "Lundi 5 Octobre", "plat": "Escalope de volaille à la crème", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Pâtes bio coquillettes", "fromage": "Camembert", "dessert": "Mousse au chocolat" },
-                { "day_short_fr": "MAR", "day_num": "6", "month_fr": "OCT.", "date_fr": "Mardi 6 Octobre", "plat": "Poisson meunière", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Épinards à la crème", "fromage": "Cantal", "dessert": "Compote bio" },
-                { "day_short_fr": "MER", "day_num": "7", "month_fr": "OCT.", "date_fr": "Mercredi 7 Octobre", "plat": "Jambon porc / volaille grillé", "cat": "porc", "badge_type": "pink", "icon": "🥩", "badge_fr": "Porc ?", "accompagnement": "Purée de potiron", "fromage": "Yaourt bio", "dessert": "Banane" },
-                { "day_short_fr": "JEU", "day_num": "8", "month_fr": "OCT.", "date_fr": "Jeudi 8 Octobre", "plat": "Osso bucco de veau", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Polenta crémeuse", "fromage": "Brie", "dessert": "Kiwi bio" },
-                { "day_short_fr": "VEN", "day_num": "9", "month_fr": "OCT.", "date_fr": "Vendredi 9 Octobre", "plat": "Filet de merlu à l'aneth", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Riz pilaf bio", "fromage": "Saint-Paulin", "dessert": "Poire bio" }
+                {
+                    "day_short_fr": "LUN", "day_short_en": "MON", "day_short_ar": "الإثنين",
+                    "day_num": "5", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Lundi 5 Octobre", "date_en": "Monday, October 5", "date_ar": "الإثنين 5 أكتوبر",
+                    "plat_fr": "Escalope de volaille à la crème", "plat_en": "Poultry Escalope in Cream", "plat_ar": "شريحة دجاج بالكريمة",
+                    "cat": "volaille", "badge_type": "yellow", "icon": "🍗",
+                    "accompagnement_fr": "Pâtes bio coquillettes", "accompagnement_en": "Organic Shell Pasta", "accompagnement_ar": "معكرونة عضوية",
+                    "fromage_fr": "Camembert", "fromage_en": "Camembert Cheese", "fromage_ar": "جبن كامامبير",
+                    "dessert_fr": "Mousse au chocolat", "dessert_en": "Chocolate Mousse", "dessert_ar": "موس الشوكولاتة"
+                },
+                {
+                    "day_short_fr": "MAR", "day_short_en": "TUE", "day_short_ar": "الثلاثاء",
+                    "day_num": "6", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mardi 6 Octobre", "date_en": "Tuesday, October 6", "date_ar": "الثلاثاء 6 أكتوبر",
+                    "plat_fr": "Poisson meunière", "plat_en": "Fish Meunière", "plat_ar": "سمك مونيير بالليمون",
+                    "cat": "poisson", "badge_type": "teal", "icon": "🐟",
+                    "accompagnement_fr": "Épinards à la crème", "accompagnement_en": "Creamed Spinach", "accompagnement_ar": "سبانخ بالكريمة",
+                    "fromage_fr": "Cantal", "fromage_en": "Cantal Cheese", "fromage_ar": "جبن كانتال",
+                    "dessert_fr": "Compote bio", "dessert_en": "Organic Compote", "dessert_ar": "كومبوت عضوي"
+                },
+                {
+                    "day_short_fr": "MER", "day_short_en": "WED", "day_short_ar": "الأربعاء",
+                    "day_num": "7", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mercredi 7 Octobre", "date_en": "Wednesday, October 7", "date_ar": "الأربعاء 7 أكتوبر",
+                    "plat_fr": "Jambon porc / volaille grillé", "plat_en": "Grilled Pork Ham / Poultry", "plat_ar": "لحم خنزير / دجاج مشوي",
+                    "cat": "porc", "badge_type": "pink", "icon": "🥩", "has_option": True,
+                    "accompagnement_fr": "Purée de potiron", "accompagnement_en": "Pumpkin Purée", "accompagnement_ar": "هريس اليقطين",
+                    "fromage_fr": "Yaourt bio", "fromage_en": "Organic Yogurt", "fromage_ar": "زبادي عضوي",
+                    "dessert_fr": "Banane", "dessert_en": "Banana", "dessert_ar": "موز"
+                },
+                {
+                    "day_short_fr": "JEU", "day_short_en": "THU", "day_short_ar": "الخميس",
+                    "day_num": "8", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Jeudi 8 Octobre", "date_en": "Thursday, October 8", "date_ar": "الخميس 8 أكتوبر",
+                    "plat_fr": "Osso bucco de veau", "plat_en": "Veal Osso Buco", "plat_ar": "أوسوبوكو لحم عجل",
+                    "cat": "viande", "badge_type": "pink", "icon": "🥩",
+                    "accompagnement_fr": "Polenta crémeuse", "accompagnement_en": "Creamy Polenta", "accompagnement_ar": "بولينتا كريمية",
+                    "fromage_fr": "Brie", "fromage_en": "Brie Cheese", "fromage_ar": "جبن بري",
+                    "dessert_fr": "Kiwi bio", "dessert_en": "Organic Kiwi", "dessert_ar": "كيوي عضوي"
+                },
+                {
+                    "day_short_fr": "VEN", "day_short_en": "FRI", "day_short_ar": "الجمعة",
+                    "day_num": "9", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Vendredi 9 Octobre", "date_en": "Friday, October 9", "date_ar": "الجمعة 9 أكتوبر",
+                    "plat_fr": "Filet de merlu à l'aneth", "plat_en": "Hake Fillet with Dill", "plat_ar": "شريحة سمك المرلو مع الشبت",
+                    "cat": "poisson", "badge_type": "teal", "icon": "🐟",
+                    "accompagnement_fr": "Riz pilaf bio", "accompagnement_en": "Organic Pilaf Rice", "accompagnement_ar": "أرز بيلاف عضوي",
+                    "fromage_fr": "Saint-Paulin", "fromage_en": "Saint-Paulin Cheese", "fromage_ar": "جبن سان بولان",
+                    "dessert_fr": "Poire bio", "dessert_en": "Organic Pear", "dessert_ar": "كمثرى عضوية"
+                }
             ]
         },
         {
@@ -210,11 +353,56 @@ def get_verified_month_dataset():
             "week_label_en": "WEEK OF OCTOBER 12",
             "week_label_ar": "أسبوع 12 أكتوبر",
             "days": [
-                { "day_short_fr": "LUN", "day_num": "12", "month_fr": "OCT.", "date_fr": "Lundi 12 Octobre", "plat": "Sauté de dinde paprika", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Penne bio", "fromage": "Edam", "dessert": "Clémentine" },
-                { "day_short_fr": "MAR", "day_num": "13", "month_fr": "OCT.", "date_fr": "Mardi 13 Octobre", "plat": "Lasagnes aux légumes bio", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Salade verte", "fromage": "Chèvre frais", "dessert": "Pomme bio" },
-                { "day_short_fr": "MER", "day_num": "14", "month_fr": "OCT.", "date_fr": "Mercredi 14 Octobre", "plat": "Cordon bleu", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Petits pois et carottes", "fromage": "Chanteneige", "dessert": "Fruit de saison bio", "is_tomorrow": True },
-                { "day_short_fr": "JEU", "day_num": "15", "month_fr": "OCT.", "date_fr": "Jeudi 15 Octobre", "plat": "Steak haché", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Frites au four & haricots", "fromage": "Fromage frais", "dessert": "Compote de poires" },
-                { "day_short_fr": "VEN", "day_num": "16", "month_fr": "OCT.", "date_fr": "Vendredi 16 Octobre", "plat": "Saumon rôti à la crème", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Riz basmati bio", "fromage": "Tomme noire", "dessert": "Tartelette aux pommes" }
+                {
+                    "day_short_fr": "LUN", "day_short_en": "MON", "day_short_ar": "الإثنين",
+                    "day_num": "12", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Lundi 12 Octobre", "date_en": "Monday, October 12", "date_ar": "الإثنين 12 أكتوبر",
+                    "plat_fr": "Sauté de dinde paprika", "plat_en": "Turkey Sauté with Paprika", "plat_ar": "قطع ديك رومي بالبابريكا",
+                    "cat": "volaille", "badge_type": "yellow", "icon": "🍗",
+                    "accompagnement_fr": "Penne bio", "accompagnement_en": "Organic Penne", "accompagnement_ar": "معكرونة بيني عضوية",
+                    "fromage_fr": "Edam", "fromage_en": "Edam Cheese", "fromage_ar": "جبن إيدام",
+                    "dessert_fr": "Clémentine", "dessert_en": "Clementine", "dessert_ar": "كليمنتين"
+                },
+                {
+                    "day_short_fr": "MAR", "day_short_en": "TUE", "day_short_ar": "الثلاثاء",
+                    "day_num": "13", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mardi 13 Octobre", "date_en": "Tuesday, October 13", "date_ar": "الثلاثاء 13 أكتوبر",
+                    "plat_fr": "Lasagnes aux légumes bio", "plat_en": "Organic Vegetable Lasagna", "plat_ar": "لازانيا بالخضار العضوية",
+                    "cat": "vegetarien", "badge_type": "green", "icon": "🌱",
+                    "accompagnement_fr": "Salade verte", "accompagnement_en": "Green Salad", "accompagnement_ar": "سلطة خضراء",
+                    "fromage_fr": "Chèvre frais", "fromage_en": "Fresh Goat Cheese", "fromage_ar": "جبن ماعز طازج",
+                    "dessert_fr": "Pomme bio", "dessert_en": "Organic Apple", "dessert_ar": "تفاح عضوي"
+                },
+                {
+                    "day_short_fr": "MER", "day_short_en": "WED", "day_short_ar": "الأربعاء",
+                    "day_num": "14", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mercredi 14 Octobre", "date_en": "Wednesday, October 14", "date_ar": "الأربعاء 14 أكتوبر",
+                    "plat_fr": "Cordon bleu", "plat_en": "Cordon Bleu", "plat_ar": "كوردون بلو دجاج",
+                    "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "is_tomorrow": True,
+                    "accompagnement_fr": "Petits pois et carottes", "accompagnement_en": "Peas and Carrots", "accompagnement_ar": "بازلاء وجزر",
+                    "fromage_fr": "Chanteneige", "fromage_en": "Chanteneige Cheese", "fromage_ar": "جبن شانتينيج",
+                    "dessert_fr": "Fruit de saison bio", "dessert_en": "Organic Seasonal Fruit", "dessert_ar": "فواكه موسمية عضوية"
+                },
+                {
+                    "day_short_fr": "JEU", "day_short_en": "THU", "day_short_ar": "الخميس",
+                    "day_num": "15", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Jeudi 15 Octobre", "date_en": "Thursday, October 15", "date_ar": "الخميس 15 أكتوبر",
+                    "plat_fr": "Steak haché", "plat_en": "Minced Beef Steak", "plat_ar": "ستيك لحم مفروم",
+                    "cat": "viande", "badge_type": "pink", "icon": "🥩",
+                    "accompagnement_fr": "Frites au four & haricots", "accompagnement_en": "Oven Fries & Green Beans", "accompagnement_ar": "بطاطس مشوية وفاصوليا",
+                    "fromage_fr": "Fromage frais", "fromage_en": "Fresh Cream Cheese", "fromage_ar": "جبن طازج",
+                    "dessert_fr": "Compote de poires", "dessert_en": "Pear Compote", "dessert_ar": "كومبوت الكمثرى"
+                },
+                {
+                    "day_short_fr": "VEN", "day_short_en": "FRI", "day_short_ar": "الجمعة",
+                    "day_num": "16", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Vendredi 16 Octobre", "date_en": "Friday, October 16", "date_ar": "الجمعة 16 أكتوبر",
+                    "plat_fr": "Saumon rôti à la crème", "plat_en": "Roasted Salmon with Cream", "plat_ar": "سلمون مشوي بالكريمة",
+                    "cat": "poisson", "badge_type": "teal", "icon": "🐟",
+                    "accompagnement_fr": "Riz basmati bio", "accompagnement_en": "Organic Basmati Rice", "accompagnement_ar": "أرز بسمتي عضوي",
+                    "fromage_fr": "Tomme noire", "fromage_en": "Tomme Noire Cheese", "fromage_ar": "جبن توم نوار",
+                    "dessert_fr": "Tartelette aux pommes", "dessert_en": "Apple Tartlet", "dessert_ar": "تارت التفاح"
+                }
             ]
         },
         {
@@ -222,11 +410,56 @@ def get_verified_month_dataset():
             "week_label_en": "WEEK OF OCTOBER 19",
             "week_label_ar": "أسبوع 19 أكتوبر",
             "days": [
-                { "day_short_fr": "LUN", "day_num": "19", "month_fr": "OCT.", "date_fr": "Lundi 19 Octobre", "plat": "Colin d'Alaska pané", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Purée de brocolis", "fromage": "Gouda bio", "dessert": "Kiwi" },
-                { "day_short_fr": "MAR", "day_num": "20", "month_fr": "OCT.", "date_fr": "Mardi 20 Octobre", "plat": "Boulettes de boeuf sauce tomate", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Coquillettes bio", "fromage": "Emmental", "dessert": "Pomme au four" },
-                { "day_short_fr": "MER", "day_num": "21", "month_fr": "OCT.", "date_fr": "Mercredi 21 Octobre", "plat": "Chili sin carne bio", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Riz blanc bio", "fromage": "Fromage blanc", "dessert": "Orange" },
-                { "day_short_fr": "JEU", "day_num": "22", "month_fr": "OCT.", "date_fr": "Jeudi 22 Octobre", "plat": "Rôti de dinde au jus", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Haricots beurre", "fromage": "Mimolette", "dessert": "Compote pomme pêche" },
-                { "day_short_fr": "VEN", "day_num": "23", "month_fr": "OCT.", "date_fr": "Vendredi 23 Octobre", "plat": "Dos de cabillaud à l'estragon", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Pommes vapeur", "fromage": "Saint-Nectaire", "dessert": "Flan vanille" }
+                {
+                    "day_short_fr": "LUN", "day_short_en": "MON", "day_short_ar": "الإثنين",
+                    "day_num": "19", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Lundi 19 Octobre", "date_en": "Monday, October 19", "date_ar": "الإثنين 19 أكتوبر",
+                    "plat_fr": "Colin d'Alaska pané", "plat_en": "Breaded Alaska Pollock", "plat_ar": "سمك الكولين المقرمش",
+                    "cat": "poisson", "badge_type": "teal", "icon": "🐟",
+                    "accompagnement_fr": "Purée de brocolis", "accompagnement_en": "Broccoli Purée", "accompagnement_ar": "هريس البروكلي",
+                    "fromage_fr": "Gouda bio", "fromage_en": "Organic Gouda", "fromage_ar": "جبن غودا عضوي",
+                    "dessert_fr": "Kiwi", "dessert_en": "Kiwi", "dessert_ar": "كيوي"
+                },
+                {
+                    "day_short_fr": "MAR", "day_short_en": "TUE", "day_short_ar": "الثلاثاء",
+                    "day_num": "20", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mardi 20 Octobre", "date_en": "Tuesday, October 20", "date_ar": "الثلاثاء 20 أكتوبر",
+                    "plat_fr": "Boulettes de boeuf sauce tomate", "plat_en": "Beef Meatballs in Tomato Sauce", "plat_ar": "كرات لحم بصلصة الطماطم",
+                    "cat": "viande", "badge_type": "pink", "icon": "🥩",
+                    "accompagnement_fr": "Coquillettes bio", "accompagnement_en": "Organic Shell Pasta", "accompagnement_ar": "معكرونة عضوية",
+                    "fromage_fr": "Emmental", "fromage_en": "Emmental Cheese", "fromage_ar": "جبن إيمنتال",
+                    "dessert_fr": "Pomme au four", "dessert_en": "Baked Apple", "dessert_ar": "تفاح مخبوز"
+                },
+                {
+                    "day_short_fr": "MER", "day_short_en": "WED", "day_short_ar": "الأربعاء",
+                    "day_num": "21", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mercredi 21 Octobre", "date_en": "Wednesday, October 21", "date_ar": "الأربعاء 21 أكتوبر",
+                    "plat_fr": "Chili sin carne bio", "plat_en": "Organic Vegetarian Chili", "plat_ar": "تشيلي نباتي عضوي",
+                    "cat": "vegetarien", "badge_type": "green", "icon": "🌱",
+                    "accompagnement_fr": "Riz blanc bio", "accompagnement_en": "Organic White Rice", "accompagnement_ar": "أرز أبيض عضوي",
+                    "fromage_fr": "Fromage blanc", "fromage_en": "Fromage Blanc", "fromage_ar": "جبن طازج",
+                    "dessert_fr": "Orange", "dessert_en": "Orange", "dessert_ar": "برتقال"
+                },
+                {
+                    "day_short_fr": "JEU", "day_short_en": "THU", "day_short_ar": "الخميس",
+                    "day_num": "22", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Jeudi 22 Octobre", "date_en": "Thursday, October 22", "date_ar": "الخميس 22 أكتوبر",
+                    "plat_fr": "Rôti de dinde au jus", "plat_en": "Roast Turkey with Gravy", "plat_ar": "روستو ديك رومي مع المرق",
+                    "cat": "volaille", "badge_type": "yellow", "icon": "🍗",
+                    "accompagnement_fr": "Haricots beurre", "accompagnement_en": "Wax Beans", "accompagnement_ar": "فاصوليا صفراء بالزبدة",
+                    "fromage_fr": "Mimolette", "fromage_en": "Mimolette Cheese", "fromage_ar": "جبن ميموليت",
+                    "dessert_fr": "Compote pomme pêche", "dessert_en": "Apple-Peach Compote", "dessert_ar": "كومبوت تفاح وخوخ"
+                },
+                {
+                    "day_short_fr": "VEN", "day_short_en": "FRI", "day_short_ar": "الجمعة",
+                    "day_num": "23", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Vendredi 23 Octobre", "date_en": "Friday, October 23", "date_ar": "الجمعة 23 أكتوبر",
+                    "plat_fr": "Dos de cabillaud à l'estragon", "plat_en": "Cod Loin with Tarragon", "plat_ar": "سمك القد مع الطرخون",
+                    "cat": "poisson", "badge_type": "teal", "icon": "🐟",
+                    "accompagnement_fr": "Pommes vapeur", "accompagnement_en": "Steamed Potatoes", "accompagnement_ar": "بطاطس مطهوة على البخار",
+                    "fromage_fr": "Saint-Nectaire", "fromage_en": "Saint-Nectaire Cheese", "fromage_ar": "جبن سان نكتير",
+                    "dessert_fr": "Flan vanille", "dessert_en": "Vanilla Flan", "dessert_ar": "فلان الفانيليا"
+                }
             ]
         },
         {
@@ -234,38 +467,81 @@ def get_verified_month_dataset():
             "week_label_en": "WEEK OF OCTOBER 26",
             "week_label_ar": "أسبوع 26 أكتوبر",
             "days": [
-                { "day_short_fr": "LUN", "day_num": "26", "month_fr": "OCT.", "date_fr": "Lundi 26 Octobre", "plat": "Émincé de poulet au curry doux", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Riz basmati bio", "fromage": "Yaourt nature", "dessert": "Poire bio" },
-                { "day_short_fr": "MAR", "day_num": "27", "month_fr": "OCT.", "date_fr": "Mardi 27 Octobre", "plat": "Pavé de lieu noir meunière", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Fondue de poireaux", "fromage": "Brie", "dessert": "Compote pomme poire" },
-                { "day_short_fr": "MER", "day_num": "28", "month_fr": "OCT.", "date_fr": "Mercredi 28 Octobre", "plat": "Omelette bio aux fines herbes", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Poêlée campagnarde", "fromage": "Petit Carré", "dessert": "Banane bio" },
-                { "day_short_fr": "JEU", "day_num": "29", "month_fr": "OCT.", "date_fr": "Jeudi 29 Octobre", "plat": "Paupiette de veau braisée", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Carottes fondantes bio", "fromage": "Cantal doux", "dessert": "Mousse vanille" },
-                { "day_short_fr": "VEN", "day_num": "30", "month_fr": "OCT.", "date_fr": "Vendredi 30 Octobre", "plat": "Cuisse de poulet rôtie", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Pommes noisettes", "fromage": "Fromage frais", "dessert": "Gâteau marbré" }
+                {
+                    "day_short_fr": "LUN", "day_short_en": "MON", "day_short_ar": "الإثنين",
+                    "day_num": "26", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Lundi 26 Octobre", "date_en": "Monday, October 26", "date_ar": "الإثنين 26 أكتوبر",
+                    "plat_fr": "Émincé de poulet au curry doux", "plat_en": "Chicken Strips with Mild Curry", "plat_ar": "قطع دجاج بالكاري الخفيف",
+                    "cat": "volaille", "badge_type": "yellow", "icon": "🍗",
+                    "accompagnement_fr": "Riz basmati bio", "accompagnement_en": "Organic Basmati Rice", "accompagnement_ar": "أرز بسمتي عضوي",
+                    "fromage_fr": "Yaourt nature", "fromage_en": "Plain Yogurt", "fromage_ar": "زبادي طبيعي",
+                    "dessert_fr": "Poire bio", "dessert_en": "Organic Pear", "dessert_ar": "كمثرى عضوية"
+                },
+                {
+                    "day_short_fr": "MAR", "day_short_en": "TUE", "day_short_ar": "الثلاثاء",
+                    "day_num": "27", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mardi 27 Octobre", "date_en": "Tuesday, October 27", "date_ar": "الثلاثاء 27 أكتوبر",
+                    "plat_fr": "Pavé de lieu noir meunière", "plat_en": "Saithe Steak Meunière", "plat_ar": "شريحة سمك السايث مونيير",
+                    "cat": "poisson", "badge_type": "teal", "icon": "🐟",
+                    "accompagnement_fr": "Fondue de poireaux", "accompagnement_en": "Leek Fondue", "accompagnement_ar": "يخنة الكراث",
+                    "fromage_fr": "Brie", "fromage_en": "Brie Cheese", "fromage_ar": "جبن بري",
+                    "dessert_fr": "Compote pomme poire", "dessert_en": "Apple-Pear Compote", "dessert_ar": "كومبوت تفاح وكمثرى"
+                },
+                {
+                    "day_short_fr": "MER", "day_short_en": "WED", "day_short_ar": "الأربعاء",
+                    "day_num": "28", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Mercredi 28 Octobre", "date_en": "Wednesday, October 28", "date_ar": "الأربعاء 28 أكتوبر",
+                    "plat_fr": "Omelette bio aux fines herbes", "plat_en": "Organic Herb Omelette", "plat_ar": "عجة بيض عضوية بالأعشاب",
+                    "cat": "vegetarien", "badge_type": "green", "icon": "🌱",
+                    "accompagnement_fr": "Poêlée campagnarde", "accompagnement_en": "Country Style Veggies", "accompagnement_ar": "خضار على الطريقة الريفية",
+                    "fromage_fr": "Petit Carré", "fromage_en": "Petit Carré Cheese", "fromage_ar": "جبن بتي كاريه",
+                    "dessert_fr": "Banane bio", "dessert_en": "Organic Banana", "dessert_ar": "موز عضوي"
+                },
+                {
+                    "day_short_fr": "JEU", "day_short_en": "THU", "day_short_ar": "الخميس",
+                    "day_num": "29", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Jeudi 29 Octobre", "date_en": "Thursday, October 29", "date_ar": "الخميس 29 أكتوبر",
+                    "plat_fr": "Paupiette de veau braisée", "plat_en": "Braised Veal Paupiette", "plat_ar": "لفائف لحم العجل المطهوة",
+                    "cat": "viande", "badge_type": "pink", "icon": "🥩",
+                    "accompagnement_fr": "Carottes fondantes bio", "accompagnement_en": "Organic Tender Carrots", "accompagnement_ar": "جزر طري عضوي",
+                    "fromage_fr": "Cantal doux", "fromage_en": "Mild Cantal Cheese", "fromage_ar": "جبن كانتال",
+                    "dessert_fr": "Mousse vanille", "dessert_en": "Vanilla Mousse", "dessert_ar": "موس الفانيليا"
+                },
+                {
+                    "day_short_fr": "VEN", "day_short_en": "FRI", "day_short_ar": "الجمعة",
+                    "day_num": "30", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "date_fr": "Vendredi 30 Octobre", "date_en": "Friday, October 30", "date_ar": "الجمعة 30 أكتوبر",
+                    "plat_fr": "Cuisse de poulet rôtie", "plat_en": "Roasted Chicken Leg", "plat_ar": "فخذ دجاج محمر بالأعشاب",
+                    "cat": "volaille", "badge_type": "yellow", "icon": "🍗",
+                    "accompagnement_fr": "Pommes noisettes", "accompagnement_en": "Noisette Potatoes", "accompagnement_ar": "كرات بطاطس مقرمشة",
+                    "fromage_fr": "Fromage frais", "fromage_en": "Fresh Cream Cheese", "fromage_ar": "جبن طازج",
+                    "dessert_fr": "Gâteau marbré", "dessert_en": "Marble Cake", "dessert_ar": "كيك رخامي"
+                }
             ]
         }
     ]
 
 def update_menu_pipeline():
-    """Checks for newly published municipal PDF and updates memory cache."""
     global MENU_CACHE
     now = time.time()
 
     if MENU_CACHE["weeks"] and (now - MENU_CACHE["last_checked"]) < MENU_CACHE["ttl"]:
         return MENU_CACHE
 
-    active_url = find_active_school_pdf_url()
-    filename = active_url.split('/')[-1] if active_url else "Menu-scolaires-octobre-2026.pdf"
-
-    # Extract month and year from filename or URL (e.g. Menu-scolaires-octobre-2026.pdf)
-    month_match = re.search(r'scolaire[s]?[-_ ]+([a-zA-ZÀ-ÿ]+)[-_ ]+(\d{4})', filename, re.IGNORECASE)
-    month_title = f"{month_match.group(1).capitalize()} {month_match.group(2)}" if month_match else "Octobre 2026"
-
+    active_url, filename, month_title = find_active_school_pdf_url()
+    
     MENU_CACHE["pdf_url"] = active_url or "https://www.chatou.fr/wp-content/uploads/2026/09/Menu-scolaires-octobre-2026.pdf"
-    MENU_CACHE["pdf_filename"] = filename
-    MENU_CACHE["month_title"] = month_title
-    MENU_CACHE["weeks"] = get_verified_month_dataset()
-    MENU_CACHE["stats"] = { "total_meals": 25, "poisson": 7, "vegetarien": 4, "volaille": 7, "viande_porc": 7 }
+    MENU_CACHE["pdf_filename"] = filename or "Menu-scolaires-octobre-2026.pdf"
+    MENU_CACHE["month_title"] = month_title or "Octobre 2026"
+    MENU_CACHE["weeks"] = get_verified_multilingual_month_dataset()
+    MENU_CACHE["stats"] = {"total_meals": 25, "poisson": 7, "vegetarien": 4, "volaille": 7, "viande_porc": 7}
     MENU_CACHE["last_checked"] = now
 
     return MENU_CACHE
+
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('static', 'manifest.json', mimetype='application/manifest+json')
 
 @app.route('/api/menu')
 def get_menu():
