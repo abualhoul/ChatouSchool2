@@ -112,11 +112,12 @@
 </head>
 <body class="bg-[#FAF8F5] dark:bg-[#0F172A] text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-200">
 
-    <div class="max-w-4xl w-full mx-auto px-3.5 sm:px-6 pt-5 sm:pt-8 pb-12 sm:pb-16 space-y-4 sm:space-y-6">
+    <!-- Compact Main Container (25% height reduction above the fold) -->
+    <div class="max-w-4xl w-full mx-auto px-3 sm:px-6 pt-3 sm:pt-6 pb-10 sm:pb-14 space-y-2.5 sm:space-y-4">
 
-        <!-- Header -->
-        <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-1">
-            <div class="flex items-center gap-3">
+        <!-- 1. Sleek Compact Header -->
+        <header class="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2 pb-0.5">
+            <div class="flex items-center gap-2.5">
                 <div class="protected-wrapper flex-shrink-0 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" oncontextmenu="return false;">
                     <img src="/static/logo.png" 
                          alt="Logo" 
@@ -124,136 +125,116 @@
                          oncontextmenu="return false;"
                          ondragstart="return false;"
                          onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=100&auto=format&fit=crop&q=80';"
-                         class="protected-img w-11 h-11 sm:w-13 sm:h-13 rounded-full object-cover shadow-sm border-2 border-amber-300 dark:border-amber-500/50">
+                         class="protected-img w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover shadow-xs border-2 border-amber-300 dark:border-amber-500/50">
                     <div class="protected-shield" oncontextmenu="return false;" ondragstart="return false;"></div>
                 </div>
 
                 <div>
-                    <h1 class="font-editorial text-2xl xs:text-3xl sm:text-4xl text-slate-900 dark:text-white tracking-tight font-bold">
+                    <h1 class="font-editorial text-xl xs:text-2xl sm:text-3xl text-slate-900 dark:text-white tracking-tight font-bold leading-tight">
                         <span id="txt-title-prefix">Menus scolaires</span> · <span class="text-[#0E6061] dark:text-[#38BDF8]">Chatou</span>
                     </h1>
-                    <p id="txt-subtitle" class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">Le menu de la cantine, clair en un coup d'œil</p>
+                    <p id="txt-subtitle" class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Le menu de la cantine, clair en un coup d'œil</p>
                 </div>
             </div>
 
-            <!-- Controls: Dark Mode, Language Selector, Native App Install & Refresh -->
-            <div class="flex items-center gap-2 self-end sm:self-auto flex-wrap">
-                <!-- Native App Download Button -->
-                <button onclick="showInstallGuide()" id="install-app-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0E6061] text-white text-xs font-semibold shadow-xs active:scale-95 transition min-h-[38px]">
-                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <!-- Header Controls: Compact Pill Buttons -->
+            <div class="flex items-center gap-1.5 self-end xs:self-auto flex-wrap">
+                <button onclick="showInstallGuide()" id="install-app-btn" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#0E6061] text-white text-[11px] font-semibold shadow-xs active:scale-95 transition h-7 sm:h-8">
+                    <i data-lucide="download" class="w-3 h-3"></i>
                     <span id="txt-app-btn">App</span>
                 </button>
 
-                <!-- Dark Mode Button -->
-                <button onclick="toggleDarkMode()" id="dark-toggle-btn" aria-label="Dark mode" class="min-h-[38px] min-w-[38px] p-2 rounded-full bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition flex items-center justify-center shadow-xs">
-                    <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
-                    <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
+                <button onclick="toggleDarkMode()" id="dark-toggle-btn" aria-label="Dark mode" class="h-7 w-7 sm:h-8 sm:w-8 p-1.5 rounded-full bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition flex items-center justify-center shadow-xs">
+                    <i data-lucide="moon" class="w-3.5 h-3.5 hidden dark:block"></i>
+                    <i data-lucide="sun" class="w-3.5 h-3.5 block dark:hidden"></i>
                 </button>
 
-                <!-- Language Switcher -->
-                <div class="flex items-center bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 rounded-full p-0.5 sm:p-1 text-xs font-semibold shadow-xs">
-                    <button onclick="setLang('fr')" id="lang-fr" class="px-2.5 py-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition min-h-[32px]">FR</button>
-                    <button onclick="setLang('en')" id="lang-en" class="px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition min-h-[32px]">EN</button>
-                    <button onclick="setLang('ar')" id="lang-ar" class="px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition min-h-[32px]">العربية</button>
+                <div class="flex items-center bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 rounded-full p-0.5 text-[11px] font-semibold shadow-xs">
+                    <button onclick="setLang('fr')" id="lang-fr" class="px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition">FR</button>
+                    <button onclick="setLang('en')" id="lang-en" class="px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">EN</button>
+                    <button onclick="setLang('ar')" id="lang-ar" class="px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">العربية</button>
                 </div>
 
-                <!-- Refresh Button -->
-                <button onclick="loadMenuData()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-[#E8E4DC] dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 active:scale-95 transition shadow-xs min-h-[38px]">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <button onclick="loadMenuData()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-[#E8E4DC] dark:border-slate-700 text-[11px] font-medium text-slate-700 dark:text-slate-200 active:scale-95 transition shadow-xs h-7 sm:h-8">
+                    <i data-lucide="refresh-cw" class="w-3 h-3"></i>
                     <span id="txt-refresh" class="hidden xs:inline">Actualiser</span>
                 </button>
             </div>
         </header>
 
-        <!-- Yvelines Calendar Banner -->
-        <div id="calendar-banner" class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 flex flex-col xs:flex-row items-start xs:items-center justify-between text-xs gap-1.5 shadow-xs">
-            <div class="flex items-center gap-2">
+        <!-- 2. Slim 1-Line Calendar Banner -->
+        <div id="calendar-banner" class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 flex items-center justify-between text-[11px] shadow-xs">
+            <div class="flex items-center gap-2 truncate">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
-                <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]" id="lbl-calendar">CALENDRIER SCOLAIRE</span>
-                <span class="font-semibold text-slate-700 dark:text-slate-200" id="val-calendar-status">🏫 Jour de classe (Zone C · Yvelines)</span>
+                <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[9px]" id="lbl-calendar">CALENDRIER</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-200 truncate" id="val-calendar-status">🏫 Jour de classe (Zone C · Yvelines)</span>
             </div>
-            <span class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Académie de Versailles · Chatou</span>
+            <span class="text-[10px] text-slate-400 dark:text-slate-500 font-medium hidden xs:inline">Académie de Versailles</span>
         </div>
 
-        <!-- Chatou Weather Banner -->
-        <section id="weather-banner" class="bg-gradient-to-r from-sky-50 via-white to-amber-50/70 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-sky-100/80 dark:border-slate-700 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-xs transition-all">
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-950 flex items-center justify-center text-sky-600 dark:text-sky-400 flex-shrink-0">
-                        <i data-lucide="map-pin" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                        <div class="text-[11px] font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300" id="txt-weather-location">Météo · Chatou 78400</div>
-                        <div class="text-xs text-slate-500 dark:text-slate-400 font-medium" id="txt-weather-sub">Prévisions récréation & cantine</div>
-                    </div>
+        <!-- 3. Ultra-Compact Single-Tier Weather Strip (~48px height) -->
+        <section id="weather-banner" class="bg-gradient-to-r from-sky-50 via-white to-amber-50/70 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-sky-100/80 dark:border-slate-700 rounded-xl px-3 py-1.5 sm:py-2 shadow-xs transition-all">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-xs text-sky-800 dark:text-sky-300 font-bold truncate">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 flex-shrink-0"></i>
+                    <span id="txt-weather-location" class="truncate">Météo · Chatou</span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 xs:gap-3 w-full sm:w-auto">
-                    <!-- Today -->
-                    <div class="bg-white/90 dark:bg-slate-800 border border-sky-100 dark:border-slate-700 rounded-xl p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-xs">
-                        <div id="icon-weather-today" class="text-xl sm:text-2xl select-none anim-sun flex-shrink-0">☀️</div>
-                        <div class="min-w-0">
-                            <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate" id="lbl-weather-today">Aujourd'hui</div>
-                            <div class="flex items-baseline gap-1">
-                                <span class="text-base sm:text-lg font-bold text-slate-800 dark:text-white" id="temp-weather-today">16°C</span>
-                                <span class="text-[9px] sm:text-[10px] text-slate-400 hidden xs:inline" id="range-weather-today">11° / 18°</span>
-                            </div>
-                            <div class="text-[10px] sm:text-[11px] font-medium text-sky-700 dark:text-sky-400 truncate" id="desc-weather-today">Ensoleillé</div>
-                        </div>
+                <!-- Inline Dual Weather Chips -->
+                <div class="flex items-center gap-1.5 xs:gap-2 flex-shrink-0">
+                    <!-- Today Chip -->
+                    <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/90 dark:bg-slate-800 border border-sky-100 dark:border-slate-700 text-[11px] shadow-xs">
+                        <span id="icon-weather-today" class="text-sm anim-sun">☀️</span>
+                        <span class="font-semibold text-slate-800 dark:text-white" id="temp-weather-today">16°C</span>
                     </div>
 
-                    <!-- Tomorrow -->
-                    <div class="bg-white/90 dark:bg-slate-800 border border-amber-100 dark:border-slate-700 rounded-xl p-2.5 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-xs">
-                        <div id="icon-weather-tomorrow" class="text-xl sm:text-2xl select-none anim-cloud flex-shrink-0">⛅</div>
-                        <div class="min-w-0">
-                            <div class="text-[9px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider truncate" id="lbl-weather-tomorrow">Demain</div>
-                            <div class="flex items-baseline gap-1">
-                                <span class="text-base sm:text-lg font-bold text-slate-800 dark:text-white" id="temp-weather-tomorrow">17°C</span>
-                                <span class="text-[9px] sm:text-[10px] text-slate-400 hidden xs:inline" id="range-weather-tomorrow">10° / 17°</span>
-                            </div>
-                            <div class="text-[10px] sm:text-[11px] font-medium text-amber-700 dark:text-amber-400 truncate" id="desc-weather-tomorrow">Éclaircies</div>
-                        </div>
+                    <!-- Tomorrow Chip -->
+                    <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/90 dark:bg-slate-800 border border-amber-100 dark:border-slate-700 text-[11px] shadow-xs">
+                        <span class="text-[10px] text-amber-600 font-bold uppercase hidden xs:inline" id="lbl-weather-tomorrow">Demain</span>
+                        <span id="icon-weather-tomorrow" class="text-sm anim-cloud">⛅</span>
+                        <span class="font-semibold text-slate-800 dark:text-white" id="temp-weather-tomorrow">17°C</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- View Switcher Tabs -->
-        <div class="flex items-center gap-2">
-            <div class="inline-flex p-1 bg-[#EFECE6] dark:bg-slate-800 rounded-full text-xs font-semibold w-full xs:w-auto">
-                <button id="tab-upcoming" onclick="switchView('upcoming')" class="flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition min-h-[38px]">
-                    <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-500"></i>
+        <!-- 4. Compact View Switcher Tabs -->
+        <div class="flex items-center justify-between gap-2 pt-0.5">
+            <div class="inline-flex p-0.5 bg-[#EFECE6] dark:bg-slate-800 rounded-full text-xs font-semibold w-full xs:w-auto">
+                <button id="tab-upcoming" onclick="switchView('upcoming')" class="flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition h-7 sm:h-8">
+                    <i data-lucide="sun" class="w-3 h-3 text-amber-500"></i>
                     <span id="txt-tab-upcoming">À venir</span>
                 </button>
-                <button id="tab-month" onclick="switchView('month')" class="flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition min-h-[38px]">
-                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                <button id="tab-month" onclick="switchView('month')" class="flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition h-7 sm:h-8">
+                    <i data-lucide="calendar" class="w-3 h-3"></i>
                     <span id="txt-tab-month">Mois</span>
                 </button>
             </div>
         </div>
 
-        <!-- VIEW 1: À VENIR (UPCOMING) -->
-        <div id="view-upcoming-container" class="space-y-6 sm:space-y-8">
-            <section id="tomorrow-hero" class="hero-glow-card rounded-2xl sm:rounded-3xl p-4 sm:p-8 space-y-4 sm:space-y-6">
+        <!-- VIEW 1: À VENIR (UPCOMING) - Sits Directly Above the Fold on Mobile! -->
+        <div id="view-upcoming-container" class="space-y-4 sm:space-y-6">
+            <section id="tomorrow-hero" class="hero-glow-card rounded-2xl p-3.5 sm:p-6 space-y-3 sm:space-y-4">
                 <div>
-                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 mb-1.5 sm:mb-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                    <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 mb-1">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                         <span id="txt-tomorrow-badge">DEMAIN À LA CANTINE</span>
                     </div>
-                    <h2 id="hero-date" class="font-editorial text-2xl xs:text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">
+                    <h2 id="hero-date" class="font-editorial text-xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
                         Mercredi 14 Octobre
                     </h2>
                 </div>
 
-                <div class="bg-[#FFF8E7] dark:bg-slate-800/80 border border-[#FBEEC8] dark:border-amber-900/40 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex items-center gap-3 sm:gap-4">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-slate-700 border border-[#F8E2A7] dark:border-slate-600 flex items-center justify-center text-lg sm:text-xl shadow-xs flex-shrink-0" id="hero-icon">
+                <!-- Featured Main Dish Banner (Visible Without Scrolling) -->
+                <div class="bg-[#FFF8E7] dark:bg-slate-800/80 border border-[#FBEEC8] dark:border-amber-900/40 rounded-xl p-3 sm:p-4 flex items-center gap-3">
+                    <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white dark:bg-slate-700 border border-[#F8E2A7] dark:border-slate-600 flex items-center justify-center text-base sm:text-lg shadow-xs flex-shrink-0" id="hero-icon">
                         🍗
                     </div>
-                    <div class="space-y-0.5 sm:space-y-1 min-w-0">
-                        <h3 id="hero-plat-title" class="font-editorial text-lg sm:text-2xl font-bold text-amber-950 dark:text-amber-100 truncate">
+                    <div class="space-y-0.5 min-w-0">
+                        <h3 id="hero-plat-title" class="font-editorial text-base sm:text-xl font-bold text-amber-950 dark:text-amber-100 truncate leading-snug">
                             Cordon bleu
                         </h3>
-                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FCE8B8] dark:bg-amber-950/80 text-[#855314] dark:text-amber-300 text-[11px] sm:text-xs font-bold">
+                        <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FCE8B8] dark:bg-amber-950/80 text-[#855314] dark:text-amber-300 text-[10px] sm:text-xs font-bold">
                             <span>🍗</span>
                             <span id="hero-plat-badge">Volaille</span>
                         </div>
@@ -261,49 +242,49 @@
                 </div>
 
                 <!-- Structured Meal Table -->
-                <div class="space-y-2 sm:space-y-3 pt-1 sm:pt-2 text-xs sm:text-sm border-t border-amber-900/10 dark:border-slate-700">
-                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
-                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-plat">PLAT</span>
+                <div class="space-y-1.5 sm:space-y-2 pt-1 text-xs sm:text-sm border-t border-amber-900/10 dark:border-slate-700">
+                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-0.5 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
+                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[9px] sm:text-[10px] xs:w-1/3" id="lbl-plat">PLAT</span>
                         <span class="font-bold text-slate-900 dark:text-white xs:w-2/3" id="val-plat">Cordon bleu</span>
                     </div>
-                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
-                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-accomp">ACCOMPAGNEMENT</span>
+                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-0.5 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
+                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[9px] sm:text-[10px] xs:w-1/3" id="lbl-accomp">ACCOMPAGNEMENT</span>
                         <span class="text-slate-700 dark:text-slate-300 xs:w-2/3" id="val-accomp">Petits pois et carottes</span>
                     </div>
-                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
-                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-fromage">FROMAGE / LAITAGE</span>
+                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-0.5 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
+                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[9px] sm:text-[10px] xs:w-1/3" id="lbl-fromage">FROMAGE / LAITAGE</span>
                         <span class="text-slate-700 dark:text-slate-300 xs:w-2/3" id="val-fromage">Chanteneige</span>
                     </div>
-                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
-                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-dessert">DESSERT</span>
-                        <div class="xs:w-2/3 flex items-center gap-2">
+                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-0.5 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
+                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[9px] sm:text-[10px] xs:w-1/3" id="lbl-dessert">DESSERT</span>
+                        <div class="xs:w-2/3 flex items-center gap-1.5">
                             <span class="text-slate-700 dark:text-slate-300" id="val-dessert">Fruit de saison bio</span>
-                            <span class="bio-badge-text text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
+                            <span class="bio-badge-text text-[8px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
                         </div>
                     </div>
-                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 gap-0.5">
-                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-pain">PAIN</span>
-                        <div class="xs:w-2/3 flex items-center gap-2">
+                    <div class="flex flex-col xs:flex-row xs:items-start justify-between py-0.5 gap-0.5">
+                        <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[9px] sm:text-[10px] xs:w-1/3" id="lbl-pain">PAIN</span>
+                        <div class="xs:w-2/3 flex items-center gap-1.5">
                             <span class="text-slate-700 dark:text-slate-300" id="val-pain">Baguette bio</span>
-                            <span class="bio-badge-text text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
+                            <span class="bio-badge-text text-[8px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">BIO</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-[#FFF4D9] dark:bg-slate-800 border border-[#FBE3B1] dark:border-slate-700 rounded-xl sm:rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-[#8C5819] dark:text-amber-400 flex items-center gap-2">
-                    <i data-lucide="sparkles" class="w-4 h-4 flex-shrink-0"></i>
+                <div class="bg-[#FFF4D9] dark:bg-slate-800 border border-[#FBE3B1] dark:border-slate-700 rounded-xl px-3 py-2 text-[11px] font-semibold text-[#8C5819] dark:text-amber-400 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 flex-shrink-0"></i>
                     <span id="hero-analysis">Analyse du menu : Volaille</span>
                 </div>
             </section>
 
             <!-- Rest of the Week Section -->
-            <section class="space-y-3 sm:space-y-4">
-                <h3 class="font-editorial text-xl sm:text-2xl font-bold text-slate-900 dark:text-white" id="txt-rest-week">
+            <section class="space-y-2.5 sm:space-y-3">
+                <h3 class="font-editorial text-lg sm:text-xl font-bold text-slate-900 dark:text-white" id="txt-rest-week">
                     Reste de la semaine
                 </h3>
-                <div id="rest-of-week-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"></div>
+                <div id="rest-of-week-grid" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3"></div>
                 <div>
-                    <button onclick="switchView('month', true)" class="min-h-[44px] text-xs font-bold text-[#0E6061] dark:text-[#38BDF8] hover:underline flex items-center gap-1.5 py-1">
+                    <button onclick="switchView('month', true)" class="min-h-[38px] text-xs font-bold text-[#0E6061] dark:text-[#38BDF8] hover:underline flex items-center gap-1.5 py-1">
                         <span id="txt-view-month-link">Voir tout le mois →</span>
                     </button>
                 </div>
@@ -360,9 +341,9 @@
     </div>
 
     <!-- Protected Footer Attribution with Children's Badge Logo -->
-    <footer class="border-t border-[#EAE6DD] dark:border-slate-800 bg-[#FAF8F5] dark:bg-[#0F172A] py-5 sm:py-6 px-3.5 sm:px-6 text-xs text-slate-500 dark:text-slate-400">
-        <div class="max-w-4xl mx-auto space-y-3.5 sm:space-y-4">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+    <footer class="border-t border-[#EAE6DD] dark:border-slate-800 bg-[#FAF8F5] dark:bg-[#0F172A] py-4 sm:py-6 px-3 sm:px-6 text-xs text-slate-500 dark:text-slate-400">
+        <div class="max-w-4xl mx-auto space-y-3">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
                     <a id="footer-pdf-link" href="#" target="_blank" class="inline-flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-white transition">
                         <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
@@ -390,7 +371,7 @@
                              oncontextmenu="return false;"
                              ondragstart="return false;"
                              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=100&auto=format&fit=crop&q=80';"
-                             class="protected-img w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-rose-300/80 shadow-xs">
+                             class="protected-img w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-rose-300/80 shadow-xs">
                         <div class="protected-shield" oncontextmenu="return false;" ondragstart="return false;"></div>
                     </div>
                     <div class="leading-snug">
@@ -407,7 +388,7 @@
         </div>
     </footer>
 
-    <!-- Multilingual UI & Native PWA Scripts -->
+    <!-- Multilingual UI & Native PWA Script Engine -->
     <script>
         const I18N = {
             fr: {
@@ -417,8 +398,8 @@
                 app_btn: "App",
                 tab_upcoming: "À venir",
                 tab_month: "Mois",
-                lbl_calendar: "CALENDRIER SCOLAIRE",
-                weather_location: "Météo · Chatou 78400",
+                lbl_calendar: "CALENDRIER",
+                weather_location: "Météo · Chatou",
                 weather_sub: "Prévisions récréation & cantine",
                 weather_today: "Aujourd'hui",
                 weather_tomorrow: "Demain",
@@ -456,8 +437,8 @@
                 app_btn: "App",
                 tab_upcoming: "Upcoming",
                 tab_month: "Month",
-                lbl_calendar: "SCHOOL CALENDAR",
-                weather_location: "Weather · Chatou 78400",
+                lbl_calendar: "CALENDAR",
+                weather_location: "Weather · Chatou",
                 weather_sub: "Recess & Lunch Forecast",
                 weather_today: "Today",
                 weather_tomorrow: "Tomorrow",
@@ -495,8 +476,8 @@
                 app_btn: "تطبيق",
                 tab_upcoming: "القادمة",
                 tab_month: "الشهر",
-                lbl_calendar: "التقويم المدرسي",
-                weather_location: "الطقس · شاتو 78400",
+                lbl_calendar: "التقويم",
+                weather_location: "الطقس · شاتو",
                 weather_sub: "توقعات أوقات الاستراحة والمطعم",
                 weather_today: "اليوم",
                 weather_tomorrow: "غداً",
@@ -561,7 +542,6 @@
         let appData = null;
         let deferredPrompt = null;
 
-        // Capture Android/Desktop PWA installation event
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -581,7 +561,6 @@
             }
         }
 
-        // Prevent context menus on protected logos
         document.addEventListener('contextmenu', function(e) {
             if (e.target.closest('.protected-wrapper') || e.target.classList.contains('protected-img')) {
                 e.preventDefault();
@@ -589,7 +568,6 @@
             }
         });
 
-        // Dark Mode
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -669,7 +647,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            evaluateLocalCalendar();
             loadMenuData();
         });
 
@@ -691,9 +668,9 @@
             ['fr', 'en', 'ar'].forEach(l => {
                 const b = document.getElementById(`lang-${l}`);
                 if (l === lang) {
-                    b.className = 'px-2.5 py-1 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition min-h-[32px]';
+                    b.className = 'px-2 py-0.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 transition';
                 } else {
-                    b.className = 'px-2.5 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition min-h-[32px]';
+                    b.className = 'px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition';
                 }
             });
 
@@ -711,9 +688,6 @@
             document.getElementById('txt-tab-month').textContent = t.tab_month;
             document.getElementById('lbl-calendar').textContent = t.lbl_calendar;
             document.getElementById('txt-weather-location').textContent = t.weather_location;
-            document.getElementById('txt-weather-sub').textContent = t.weather_sub;
-            document.getElementById('lbl-weather-today').textContent = t.weather_today;
-            document.getElementById('lbl-weather-tomorrow').textContent = t.weather_tomorrow;
             document.getElementById('txt-tomorrow-badge').textContent = t.tomorrow_badge;
             document.getElementById('lbl-plat').textContent = t.plat;
             document.getElementById('lbl-accomp').textContent = t.accomp;
@@ -746,13 +720,13 @@
             const moTab = document.getElementById('tab-month');
 
             if (view === 'upcoming') {
-                upTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition min-h-[38px]";
-                moTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 transition min-h-[38px]";
+                upTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition h-7 sm:h-8";
+                moTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 transition h-7 sm:h-8";
                 document.getElementById('view-upcoming-container').classList.remove('hidden');
                 document.getElementById('view-month-container').classList.add('hidden');
             } else {
-                moTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition min-h-[38px]";
-                upTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 transition min-h-[38px]";
+                moTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition h-7 sm:h-8";
+                upTab.className = "flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 transition h-7 sm:h-8";
                 document.getElementById('view-upcoming-container').classList.add('hidden');
                 document.getElementById('view-month-container').classList.remove('hidden');
                 renderMonthWeeks();
@@ -780,18 +754,14 @@
             const todayIcon = getWeatherIcon(w.today.condition.type);
             const elTodayIcon = document.getElementById('icon-weather-today');
             elTodayIcon.textContent = todayIcon.icon;
-            elTodayIcon.className = `text-xl sm:text-2xl select-none flex-shrink-0 ${todayIcon.anim}`;
+            elTodayIcon.className = `text-sm ${todayIcon.anim}`;
             document.getElementById('temp-weather-today').textContent = `${w.today.temp}°C`;
-            document.getElementById('range-weather-today').textContent = `${w.today.temp_min}° / ${w.today.temp_max}°`;
-            document.getElementById('desc-weather-today').textContent = (w.today.condition && (w.today.condition[currentLang] || w.today.condition.fr)) || '';
 
             const tomoIcon = getWeatherIcon(w.tomorrow.condition.type);
             const elTomoIcon = document.getElementById('icon-weather-tomorrow');
             elTomoIcon.textContent = tomoIcon.icon;
-            elTomoIcon.className = `text-xl sm:text-2xl select-none flex-shrink-0 ${tomoIcon.anim}`;
+            elTomoIcon.className = `text-sm ${tomoIcon.anim}`;
             document.getElementById('temp-weather-tomorrow').textContent = `${w.tomorrow.temp_max}°C`;
-            document.getElementById('range-weather-tomorrow').textContent = `${w.tomorrow.temp_min}° / ${w.tomorrow.temp_max}°`;
-            document.getElementById('desc-weather-tomorrow').textContent = (w.tomorrow.condition && (w.tomorrow.condition[currentLang] || w.tomorrow.condition.fr)) || '';
         }
 
         function renderUI() {
@@ -809,8 +779,6 @@
 
             if (appData.calendar) {
                 document.getElementById('val-calendar-status').textContent = appData.calendar[currentLang] || appData.calendar.fr;
-            } else {
-                evaluateLocalCalendar();
             }
 
             if (appData.stats) {
@@ -821,7 +789,6 @@
                 document.getElementById('month-count').textContent = `${appData.stats.total_meals} ${I18N[currentLang].meals_count}`;
             }
 
-            // Identify tomorrow's featured meal
             let tomorrowDay = null;
             let restDays = [];
             for (const w of appData.weeks) {
@@ -865,7 +832,7 @@
 
         function createDayCard(day) {
             const card = document.createElement('div');
-            card.className = "app-card rounded-xl sm:rounded-2xl p-3.5 sm:p-4 transition-all hover:shadow-md cursor-pointer select-none active:scale-[0.99]";
+            card.className = "app-card rounded-xl p-3 sm:p-4 transition-all hover:shadow-md cursor-pointer select-none active:scale-[0.99]";
 
             let chipBg = "bg-[#FCE8E8] dark:bg-rose-950/60 text-[#8C2C2C] dark:text-rose-300";
             let pillBg = "bg-[#FCE8E8] dark:bg-rose-950/60 text-[#8C2C2C] dark:text-rose-300";
@@ -882,25 +849,25 @@
             }
 
             card.innerHTML = `
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${chipBg} flex flex-col items-center justify-center flex-shrink-0 text-center leading-tight">
+                <div class="flex items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl ${chipBg} flex flex-col items-center justify-center flex-shrink-0 text-center leading-tight">
                             <span class="text-[8px] sm:text-[9px] font-extrabold uppercase">${getI18nText(day, 'day_short')}</span>
-                            <span class="text-sm sm:text-base font-extrabold">${day.day_num}</span>
-                            <span class="text-[7px] sm:text-[8px] uppercase tracking-tighter">${getI18nText(day, 'month')}</span>
+                            <span class="text-sm sm:text-base font-extrabold leading-none">${day.day_num}</span>
+                            <span class="text-[7px] uppercase tracking-tighter">${getI18nText(day, 'month')}</span>
                         </div>
                         <div class="min-w-0">
                             <h4 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">${getI18nText(day, 'plat')}</h4>
-                            <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold ${pillBg} mt-0.5 sm:mt-1">
+                            <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold ${pillBg} mt-0.5">
                                 <span>${day.icon}</span>
                                 <span>${getCategoryBadgeText(day.cat, day.has_option)}</span>
                             </div>
                         </div>
                     </div>
-                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0"></i>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 flex-shrink-0"></i>
                 </div>
                 <div class="accordion-content border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-1">
-                    <div class="pt-2.5 mt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                    <div class="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
                         <p><strong>${I18N[currentLang].accomp}:</strong> ${getI18nText(day, 'accompagnement') || '-'}</p>
                         <p><strong>${I18N[currentLang].fromage}:</strong> ${getI18nText(day, 'fromage') || '-'}</p>
                         <p><strong>${I18N[currentLang].dessert}:</strong> ${getI18nText(day, 'dessert') || '-'}</p>
@@ -936,10 +903,10 @@
                 if (filteredDays.length === 0) return;
 
                 const weekGroup = document.createElement('div');
-                weekGroup.className = "space-y-2 sm:space-y-3";
+                weekGroup.className = "space-y-2";
                 weekGroup.innerHTML = `
                     <h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">${getI18nText(w, 'week_label')}</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3"></div>
                 `;
 
                 const grid = weekGroup.querySelector('div');
