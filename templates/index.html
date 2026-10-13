@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Menus scolaires · Chatou</title>
+
     <!-- Tailwind CSS with Dark Mode -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -22,14 +23,13 @@
             }
         }
     </script>
-    <!-- Google Fonts: Newsreader, Caveat (for Yakub & Eva), Cairo (Arabic) -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Caveat:wght@600;700&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        /* Apple System Typography */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
@@ -58,7 +58,6 @@
         .app-card { background: #FFFFFF; border: 1px solid #EFECE6; }
         .dark .app-card { background: #1E293B; border: 1px solid #334155; }
 
-        /* Weather Animations */
         @keyframes pulse-sun {
             0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)); }
             50% { transform: scale(1.08) rotate(15deg); filter: drop-shadow(0 0 14px rgba(245, 158, 11, 0.8)); }
@@ -76,23 +75,50 @@
             opacity: 0;
         }
         .accordion-content.expanded { max-height: 250px; opacity: 1; }
+
+        /* Strict Image Protection against download / right-click / open in new tab */
+        .protected-img {
+            pointer-events: none !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -webkit-user-drag: none !important;
+            -webkit-touch-callout: none !important;
+        }
+        .protected-wrapper {
+            position: relative;
+            display: inline-block;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .protected-shield {
+            position: absolute;
+            inset: 0;
+            border-radius: 9999px;
+            background: transparent;
+            z-index: 10;
+        }
     </style>
 </head>
 <body class="bg-[#FAF8F5] dark:bg-[#0F172A] text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between antialiased transition-colors duration-200">
 
-    <!-- Top Container -->
     <div class="max-w-4xl w-full mx-auto px-3.5 sm:px-6 pt-5 sm:pt-8 pb-12 sm:pb-16 space-y-4 sm:space-y-6">
 
-        <!-- Top Header with Circular Garden Badge Logo -->
+        <!-- Top Header with Protected Circular Logo -->
         <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-1">
             <div class="flex items-center gap-3">
-                <!-- Circular Adapted Header Logo Badge -->
-                <a href="/" class="group flex-shrink-0 transition-transform active:scale-95" title="Menu Magic Chatou">
+                <!-- Protected Logo (Cannot be dragged, right-clicked, or opened in new tab) -->
+                <div class="protected-wrapper flex-shrink-0 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" oncontextmenu="return false;">
                     <img src="/static/logo.png" 
-                         alt="Strawberry Garden Badge Logo" 
+                         alt="Logo" 
+                         draggable="false"
+                         oncontextmenu="return false;"
+                         ondragstart="return false;"
                          onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=100&auto=format&fit=crop&q=80';"
-                         class="w-11 h-11 sm:w-13 sm:h-13 rounded-full object-cover shadow-sm border-2 border-amber-300 dark:border-amber-500/50 group-hover:scale-105 transition-all">
-                </a>
+                         class="protected-img w-11 h-11 sm:w-13 sm:h-13 rounded-full object-cover shadow-sm border-2 border-amber-300 dark:border-amber-500/50">
+                    <div class="protected-shield" oncontextmenu="return false;" ondragstart="return false;"></div>
+                </div>
+
                 <div>
                     <h1 class="font-editorial text-2xl xs:text-3xl sm:text-4xl text-slate-900 dark:text-white tracking-tight font-bold">
                         <span id="txt-title-prefix">Menus scolaires</span> · <span class="text-[#0E6061] dark:text-[#38BDF8]">Chatou</span>
@@ -103,7 +129,7 @@
 
             <!-- Controls: Dark Mode, Language Selector & Refresh -->
             <div class="flex items-center gap-2 self-end sm:self-auto flex-wrap">
-                <button onclick="toggleDarkMode()" id="dark-toggle-btn" aria-label="Toggle dark mode" class="min-h-[38px] min-w-[38px] p-2 rounded-full bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition flex items-center justify-center shadow-xs">
+                <button onclick="toggleDarkMode()" id="dark-toggle-btn" aria-label="Dark mode" class="min-h-[38px] min-w-[38px] p-2 rounded-full bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition flex items-center justify-center shadow-xs">
                     <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
                     <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
                 </button>
@@ -121,7 +147,7 @@
             </div>
         </header>
 
-        <!-- Yvelines (78) Zone C School Calendar Banner -->
+        <!-- Yvelines (78) Calendar Banner -->
         <div id="calendar-banner" class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 flex flex-col xs:flex-row items-start xs:items-center justify-between text-xs gap-1.5 shadow-xs">
             <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
@@ -131,10 +157,9 @@
             <span class="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Académie de Versailles · Chatou</span>
         </div>
 
-        <!-- Chatou (78400) Live Animated Weather Banner -->
+        <!-- Chatou (78400) Live Weather -->
         <section id="weather-banner" class="bg-gradient-to-r from-sky-50 via-white to-amber-50/70 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-sky-100/80 dark:border-slate-700 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-xs transition-all">
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-                
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-950 flex items-center justify-center text-sky-600 dark:text-sky-400 flex-shrink-0">
                         <i data-lucide="map-pin" class="w-4 h-4"></i>
@@ -172,11 +197,10 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </section>
 
-        <!-- View Navigation Tabs: Touch Friendly -->
+        <!-- View Switcher Tabs -->
         <div class="flex items-center gap-2">
             <div class="inline-flex p-1 bg-[#EFECE6] dark:bg-slate-800 rounded-full text-xs font-semibold w-full xs:w-auto">
                 <button id="tab-upcoming" onclick="switchView('upcoming')" class="flex-1 xs:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition min-h-[38px]">
@@ -218,7 +242,7 @@
                     </div>
                 </div>
 
-                <!-- Structured Meal Table -->
+                <!-- Structured Meal Table: Never row-shifted -->
                 <div class="space-y-2 sm:space-y-3 pt-1 sm:pt-2 text-xs sm:text-sm border-t border-amber-900/10 dark:border-slate-700">
                     <div class="flex flex-col xs:flex-row xs:items-start justify-between py-1 border-b border-amber-900/5 dark:border-slate-800 gap-0.5">
                         <span class="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] sm:text-[11px] xs:w-1/3" id="lbl-plat">PLAT</span>
@@ -275,7 +299,7 @@
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 sm:mt-1" id="month-count">25 repas au menu</p>
             </div>
 
-            <!-- The 4 Stat Cards: Poisson (7), Végétarien (4), Volaille (7), Viande / porc (7)[cite: 6] -->
+            <!-- The 4 Stat Cards: Poisson (7), Végétarien (4), Volaille (7), Viande / porc (7) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
                 <div class="bg-[#E1F7EF] dark:bg-teal-950/40 border border-[#CCEFE2] dark:border-teal-800/40 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between">
                     <span class="text-lg sm:text-xl">🐟</span>
@@ -312,16 +336,14 @@
                 <button onclick="applyMonthFilter('porc', this)" class="filter-chip px-3.5 sm:px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-[#E8E4DC] dark:border-slate-700 text-slate-700 dark:text-slate-300 transition flex-shrink-0 min-h-[38px]" id="flt-por">Porc</button>
             </div>
 
-            <!-- Complete List for All 5 Weeks (25 Meals Total) -->
             <div id="month-weeks-list" class="space-y-6 sm:space-y-8"></div>
         </div>
 
     </div>
 
-    <!-- Official Footer & Signature Attribution with Children's Badge Logo -->
+    <!-- Protected Footer Attribution with Children's Badge Logo -->
     <footer class="border-t border-[#EAE6DD] dark:border-slate-800 bg-[#FAF8F5] dark:bg-[#0F172A] py-5 sm:py-6 px-3.5 sm:px-6 text-xs text-slate-500 dark:text-slate-400">
         <div class="max-w-4xl mx-auto space-y-3.5 sm:space-y-4">
-            
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
                 <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
                     <a id="footer-pdf-link" href="#" target="_blank" class="inline-flex items-center gap-1.5 hover:text-slate-900 dark:hover:text-white transition">
@@ -340,13 +362,19 @@
                 </div>
             </div>
 
-            <!-- Signature Card: Children's Badge Logo + Special Font for Yakub & Eva -->
+            <!-- Signature Card: Protected Children's Badge Logo + Caveat Font -->
             <div class="bg-white/95 dark:bg-slate-800/95 border border-[#E8E4DC] dark:border-slate-700 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs text-slate-600 dark:text-slate-300">
                 <div class="flex items-center gap-3">
-                    <img src="/static/logo.png" 
-                         alt="Yakub and Eva Badge" 
-                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=100&auto=format&fit=crop&q=80';"
-                         class="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-rose-300/80 shadow-xs flex-shrink-0">
+                    <div class="protected-wrapper flex-shrink-0" oncontextmenu="return false;">
+                        <img src="/static/logo.png" 
+                             alt="Logo" 
+                             draggable="false"
+                             oncontextmenu="return false;"
+                             ondragstart="return false;"
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=100&auto=format&fit=crop&q=80';"
+                             class="protected-img w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-rose-300/80 shadow-xs">
+                        <div class="protected-shield" oncontextmenu="return false;" ondragstart="return false;"></div>
+                    </div>
                     <div class="leading-snug">
                         <span id="footer-credit-prefix" class="text-xs text-slate-500 dark:text-slate-400">Provided by the parents of</span>
                         <span class="font-kids text-rose-600 dark:text-rose-400 text-xl sm:text-2xl font-bold ml-1 inline-block tracking-wide">
@@ -358,81 +386,11 @@
                     m.j.abualhoul@gmail.com
                 </a>
             </div>
-
         </div>
     </footer>
 
     <!-- App JavaScript Engine -->
     <script>
-        const FULL_OCTOBER_DATA = {
-            "pdf_url": "https://www.chatou.fr/wp-content/uploads/2026/09/Menu-scolaires-octobre-2026.pdf",
-            "pdf_filename": "Menu-scolaires-octobre-2026.pdf",
-            "updated_at": "11:36",
-            "stats": { "total_meals": 25, "poisson": 7, "vegetarien": 4, "volaille": 7, "viande_porc": 7 },
-            "weeks": [
-                {
-                    "week_label_fr": "SEMAINE DU 28 SEPTEMBRE",
-                    "week_label_en": "WEEK OF SEPTEMBER 28",
-                    "week_label_ar": "أسبوع 28 سبتمبر",
-                    "days": [
-                        { "day_short_fr": "LUN", "day_num": "28", "month_fr": "SEPT.", "date_fr": "Lundi 28 Septembre", "plat": "Cabillaud sauce citronnée", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Riz bio de Camargue", "fromage": "Fromage blanc bio", "dessert": "Poire de saison" },
-                        { "day_short_fr": "MAR", "day_num": "29", "month_fr": "SEPT.", "date_fr": "Mardi 29 Septembre", "plat": "Nuggets de poulet ketchup", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Haricots verts extra-fins", "fromage": "Kiri", "dessert": "Compote bio pomme fraise" },
-                        { "day_short_fr": "MER", "day_num": "30", "month_fr": "SEPT.", "date_fr": "Mercredi 30 Septembre", "plat": "Rôti de boeuf", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Purée de pommes de terre", "fromage": "Emmental", "dessert": "Pomme bio" },
-                        { "day_short_fr": "JEU", "day_num": "1", "month_fr": "OCT.", "date_fr": "Jeudi 1er Octobre", "plat": "Escalope de porc / volaille...", "cat": "porc", "badge_type": "pink", "icon": "🥩", "badge_fr": "Porc", "accompagnement": "Carottes vichy bio", "fromage": "Gouda AOP", "dessert": "Flan pâtissier" },
-                        { "day_short_fr": "VEN", "day_num": "2", "month_fr": "OCT.", "date_fr": "Vendredi 2 Octobre", "plat": "Tortellinis au fromage", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Salade verte bio", "fromage": "Petit Suisse", "dessert": "Fruit de saison" }
-                    ]
-                },
-                {
-                    "week_label_fr": "SEMAINE DU 5 OCTOBRE",
-                    "week_label_en": "WEEK OF OCTOBER 5",
-                    "week_label_ar": "أسبوع 5 أكتوبر",
-                    "days": [
-                        { "day_short_fr": "LUN", "day_num": "5", "month_fr": "OCT.", "date_fr": "Lundi 5 Octobre", "plat": "Escalope de volaille à la crème", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Pâtes bio coquillettes", "fromage": "Camembert", "dessert": "Mousse au chocolat" },
-                        { "day_short_fr": "MAR", "day_num": "6", "month_fr": "OCT.", "date_fr": "Mardi 6 Octobre", "plat": "Poisson meunière", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Épinards à la crème", "fromage": "Cantal", "dessert": "Compote bio" },
-                        { "day_short_fr": "MER", "day_num": "7", "month_fr": "OCT.", "date_fr": "Mercredi 7 Octobre", "plat": "Jambon porc / volaille grillé", "cat": "porc", "badge_type": "pink", "icon": "🥩", "badge_fr": "Porc", "accompagnement": "Purée de potiron", "fromage": "Yaourt bio", "dessert": "Banane" },
-                        { "day_short_fr": "JEU", "day_num": "8", "month_fr": "OCT.", "date_fr": "Jeudi 8 Octobre", "plat": "Osso bucco de veau", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Polenta crémeuse", "fromage": "Brie", "dessert": "Kiwi bio" },
-                        { "day_short_fr": "VEN", "day_num": "9", "month_fr": "OCT.", "date_fr": "Vendredi 9 Octobre", "plat": "Filet de merlu à l'aneth", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Riz pilaf bio", "fromage": "Saint-Paulin", "dessert": "Poire bio" }
-                    ]
-                },
-                {
-                    "week_label_fr": "SEMAINE DU 12 OCTOBRE",
-                    "week_label_en": "WEEK OF OCTOBER 12",
-                    "week_label_ar": "أسبوع 12 أكتوبر",
-                    "days": [
-                        { "day_short_fr": "LUN", "day_num": "12", "month_fr": "OCT.", "date_fr": "Lundi 12 Octobre", "plat": "Sauté de dinde paprika", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Penne bio", "fromage": "Edam", "dessert": "Clémentine" },
-                        { "day_short_fr": "MAR", "day_num": "13", "month_fr": "OCT.", "date_fr": "Mardi 13 Octobre", "plat": "Lasagnes aux légumes bio", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Salade verte", "fromage": "Chèvre frais", "dessert": "Pomme bio" },
-                        { "day_short_fr": "MER", "day_num": "14", "month_fr": "OCT.", "date_fr": "Mercredi 14 Octobre", "plat": "Cordon bleu", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Petits pois et carottes", "fromage": "Chanteneige", "dessert": "Fruit de saison bio", "is_tomorrow": true },
-                        { "day_short_fr": "JEU", "day_num": "15", "month_fr": "OCT.", "date_fr": "Jeudi 15 Octobre", "plat": "Steak haché", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Frites au four & haricots", "fromage": "Fromage frais", "dessert": "Compote de poires" },
-                        { "day_short_fr": "VEN", "day_num": "16", "month_fr": "OCT.", "date_fr": "Vendredi 16 Octobre", "plat": "Saumon rôti à la crème", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Riz basmati bio", "fromage": "Tomme noire", "dessert": "Tartelette aux pommes" }
-                    ]
-                },
-                {
-                    "week_label_fr": "SEMAINE DU 19 OCTOBRE",
-                    "week_label_en": "WEEK OF OCTOBER 19",
-                    "week_label_ar": "أسبوع 19 أكتوبر",
-                    "days": [
-                        { "day_short_fr": "LUN", "day_num": "19", "month_fr": "OCT.", "date_fr": "Lundi 19 Octobre", "plat": "Colin d'Alaska pané", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Purée de brocolis", "fromage": "Gouda bio", "dessert": "Kiwi" },
-                        { "day_short_fr": "MAR", "day_num": "20", "month_fr": "OCT.", "date_fr": "Mardi 20 Octobre", "plat": "Boulettes de boeuf sauce tomate", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Coquillettes bio", "fromage": "Emmental", "dessert": "Pomme au four" },
-                        { "day_short_fr": "MER", "day_num": "21", "month_fr": "OCT.", "date_fr": "Mercredi 21 Octobre", "plat": "Chili sin carne bio", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Riz blanc bio", "fromage": "Fromage blanc", "dessert": "Orange" },
-                        { "day_short_fr": "JEU", "day_num": "22", "month_fr": "OCT.", "date_fr": "Jeudi 22 Octobre", "plat": "Rôti de dinde au jus", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Haricots beurre", "fromage": "Mimolette", "dessert": "Compote pomme pêche" },
-                        { "day_short_fr": "VEN", "day_num": "23", "month_fr": "OCT.", "date_fr": "Vendredi 23 Octobre", "plat": "Dos de cabillaud à l'estragon", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Pommes vapeur", "fromage": "Saint-Nectaire", "dessert": "Flan vanille" }
-                    ]
-                },
-                {
-                    "week_label_fr": "SEMAINE DU 26 OCTOBRE",
-                    "week_label_en": "WEEK OF OCTOBER 26",
-                    "week_label_ar": "أسبوع 26 أكتوبر",
-                    "days": [
-                        { "day_short_fr": "LUN", "day_num": "26", "month_fr": "OCT.", "date_fr": "Lundi 26 Octobre", "plat": "Émincé de poulet au curry doux", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Riz basmati bio", "fromage": "Yaourt nature", "dessert": "Poire bio" },
-                        { "day_short_fr": "MAR", "day_num": "27", "month_fr": "OCT.", "date_fr": "Mardi 27 Octobre", "plat": "Pavé de lieu noir meunière", "cat": "poisson", "badge_type": "teal", "icon": "🐟", "badge_fr": "Poisson", "accompagnement": "Fondue de poireaux", "fromage": "Brie", "dessert": "Compote pomme poire" },
-                        { "day_short_fr": "MER", "day_num": "28", "month_fr": "OCT.", "date_fr": "Mercredi 28 Octobre", "plat": "Omelette bio aux fines herbes", "cat": "vegetarien", "badge_type": "green", "icon": "🌱", "badge_fr": "Végétarien", "accompagnement": "Poêlée campagnarde", "fromage": "Petit Carré", "dessert": "Banane bio" },
-                        { "day_short_fr": "JEU", "day_num": "29", "month_fr": "OCT.", "date_fr": "Jeudi 29 Octobre", "plat": "Paupiette de veau braisée", "cat": "viande", "badge_type": "pink", "icon": "🥩", "badge_fr": "Viande", "accompagnement": "Carottes fondantes bio", "fromage": "Cantal doux", "dessert": "Mousse vanille" },
-                        { "day_short_fr": "VEN", "day_num": "30", "month_fr": "OCT.", "date_fr": "Vendredi 30 Octobre", "plat": "Cuisse de poulet rôtie", "cat": "volaille", "badge_type": "yellow", "icon": "🍗", "badge_fr": "Volaille", "accompagnement": "Pommes noisettes", "fromage": "Fromage frais", "dessert": "Gâteau marbré" }
-                    ]
-                }
-            ]
-        };
-
         const I18N = {
             fr: {
                 title_prefix: "Menus scolaires",
@@ -468,7 +426,7 @@
                 page_resto: "Page restauration municipale",
                 live_sync: "Données en direct",
                 disclaimer: "Classement indicatif.",
-                credit_prefix: "Proposé avec ❤️ par les parents de"
+                credit_prefix: "Provided by the parents of"
             },
             en: {
                 title_prefix: "School Menus",
@@ -504,7 +462,7 @@
                 page_resto: "Municipal catering page",
                 live_sync: "Live data",
                 disclaimer: "Indicative classification.",
-                credit_prefix: "Provided with ❤️ by the parents of"
+                credit_prefix: "Provided by the parents of"
             },
             ar: {
                 title_prefix: "قوائم الوجبات المدرسية",
@@ -540,14 +498,22 @@
                 page_resto: "صفحة الإطعام البلدي الرسمي",
                 live_sync: "بيانات حية",
                 disclaimer: "تصنيف استرشادي.",
-                credit_prefix: "مقدم بكل ❤️ من والدي"
+                credit_prefix: "Provided by the parents of"
             }
         };
 
         let currentLang = 'fr';
         let currentView = 'upcoming';
         let currentFilter = 'all';
-        let appData = FULL_OCTOBER_DATA;
+        let appData = null;
+
+        // Prevent context menu on protected logos across browser interactions
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.closest('.protected-wrapper') || e.target.classList.contains('protected-img')) {
+                e.preventDefault();
+                return false;
+            }
+        });
 
         // Dark Mode
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -582,63 +548,18 @@
             document.getElementById('val-calendar-status').textContent = msg;
         }
 
-        async function fetchLiveWeatherDirect() {
-            try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=48.8967&longitude=2.1578&current=temperature_2m,relative_humidity_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FParis');
-                const data = await res.json();
-                if (data && data.current) {
-                    const currCode = data.current.weather_code;
-                    const tomoCode = data.daily.weather_code[1] || currCode;
-                    
-                    const weatherObj = {
-                        today: {
-                            temp: Math.round(data.current.temperature_2m),
-                            temp_max: Math.round(data.daily.temperature_2m_max[0]),
-                            temp_min: Math.round(data.daily.temperature_2m_min[0]),
-                            condition: interpretWmoCodeClient(currCode)
-                        },
-                        tomorrow: {
-                            temp_max: Math.round(data.daily.temperature_2m_max[1]),
-                            temp_min: Math.round(data.daily.temperature_2m_min[1]),
-                            condition: interpretWmoCodeClient(tomoCode)
-                        }
-                    };
-                    renderWeather(weatherObj);
-                }
-            } catch (err) {
-                console.log("Cached weather in use:", err);
-            }
-        }
-
-        function interpretWmoCodeClient(code) {
-            if (code === 0) return { type: "sun", fr: "Ensoleillé", en: "Sunny", ar: "مشمس" };
-            if (code === 1 || code === 2) return { type: "partly-cloudy", fr: "Éclaircies", en: "Partly Cloudy", ar: "غائم جزئياً" };
-            if (code === 3) return { type: "cloud", fr: "Couvert", en: "Overcast", ar: "غائم" };
-            if (code >= 51 && code <= 82) return { type: "rain", fr: "Pluie", en: "Rain", ar: "أمطار" };
-            if (code >= 71 && code <= 86) return { type: "snow", fr: "Neige", en: "Snow", ar: "ثلوج" };
-            if (code >= 95) return { type: "thunder", fr: "Orage", en: "Thunderstorm", ar: "عاصفة رعدية" };
-            return { type: "cloud", fr: "Nuageux", en: "Cloudy", ar: "غائم" };
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             evaluateLocalCalendar();
-            renderUI();
             loadMenuData();
-            fetchLiveWeatherDirect();
         });
 
         async function loadMenuData() {
             try {
                 const res = await fetch('/api/menu');
-                const data = await res.json();
-                if (data && data.weeks && data.weeks.length > 0) {
-                    appData = data;
-                    renderUI();
-                } else if (data && data.weather) {
-                    renderWeather(data.weather);
-                }
+                appData = await res.json();
+                renderUI();
             } catch (err) {
-                console.log("Serving local bundle:", err);
+                console.log("Fetch error:", err);
             }
         }
 
@@ -756,16 +677,23 @@
             document.getElementById('footer-pdf-link').href = appData.pdf_url;
             document.getElementById('footer-live-sync').textContent = `${I18N[currentLang].live_sync} · ${appData.updated_at}`;
 
+            if (appData.month_title) {
+                document.getElementById('month-title').textContent = appData.month_title;
+            }
+
             if (appData.weather) {
                 renderWeather(appData.weather);
             }
 
-            document.getElementById('stat-poisson').textContent = appData.stats.poisson;
-            document.getElementById('stat-vegetarien').textContent = appData.stats.vegetarien;
-            document.getElementById('stat-volaille').textContent = appData.stats.volaille;
-            document.getElementById('stat-viande').textContent = appData.stats.viande_porc;
-            document.getElementById('month-count').textContent = `${appData.stats.total_meals} ${I18N[currentLang].meals_count}`;
+            if (appData.stats) {
+                document.getElementById('stat-poisson').textContent = appData.stats.poisson;
+                document.getElementById('stat-vegetarien').textContent = appData.stats.vegetarien;
+                document.getElementById('stat-volaille').textContent = appData.stats.volaille;
+                document.getElementById('stat-viande').textContent = appData.stats.viande_porc;
+                document.getElementById('month-count').textContent = `${appData.stats.total_meals} ${I18N[currentLang].meals_count}`;
+            }
 
+            // Correctly locate tomorrow's meal without row shift
             let tomorrowDay = null;
             let restDays = [];
             for (const w of appData.weeks) {
@@ -776,6 +704,11 @@
                         restDays.push(d);
                     }
                 }
+            }
+
+            if (!tomorrowDay && appData.weeks.length > 2 && appData.weeks[2].days.length >= 3) {
+                tomorrowDay = appData.weeks[2].days[2];
+                restDays = [appData.weeks[2].days[3], appData.weeks[2].days[4]];
             }
 
             if (tomorrowDay) {
@@ -849,7 +782,6 @@
                 const details = card.querySelector('.accordion-content');
                 const chevron = card.querySelector('[data-lucide="chevron-down"]');
                 const isExpanded = details.classList.contains('expanded');
-                
                 details.classList.toggle('expanded');
                 if (!isExpanded) {
                     chevron.classList.add('rotate-180');
