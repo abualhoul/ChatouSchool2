@@ -3,6 +3,7 @@ import io
 import re
 import time
 import datetime
+import threading
 import requests
 from bs4 import BeautifulSoup
 import pdfplumber
@@ -37,30 +38,53 @@ FRENCH_MONTH_NAMES = {
     9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre"
 }
 
+# --- In-Memory Caches ---
 MENU_CACHE = {
     "pdf_url": None,
     "pdf_filename": None,
     "month_title": None,
     "weeks": None,
     "stats": None,
-    "last_checked": 0,
-    "ttl": 21600  # 6 hours cache
+    "date_token": None
 }
 
 WEATHER_CACHE = {
     "data": None,
-    "timestamp": None
+    "timestamp": None,
+    "ttl": 3600  # 1 hour cache
 }
 
+CALENDAR_CACHE = {
+    "status": None,
+    "date_token": None
+}
+
+def get_current_day_token():
+    now = datetime.datetime.now()
+    if now.hour == 0 and now.minute < 5:
+        ref_date = now.date() - datetime.timedelta(days=1)
+    else:
+        ref_date = now.date()
+    return ref_date.isoformat()
+
 def get_yvelines_calendar_status():
+    global CALENDAR_CACHE
+    token = get_current_day_token()
+    if CALENDAR_CACHE["status"] and CALENDAR_CACHE["date_token"] == token:
+        return CALENDAR_CACHE["status"]
+
     dt = datetime.date.today()
     weekday = dt.weekday()
     if weekday in [5, 6]:
-        return {"fr": "🏠 Week-end (Pas de classe)", "en": "🏠 Weekend (No school)", "ar": "🏠 عطلة نهاية الأسبوع"}
+        status = {"fr": "🏠 Week-end (Pas de classe)", "en": "🏠 Weekend (No school)", "ar": "🏠 عطلة نهاية الأسبوع"}
     elif weekday == 2:
-        return {"fr": "🎨 Mercredi · Accueil de loisirs (Chatou 78400)", "en": "🎨 Wednesday · Leisure Center (Chatou 78400)", "ar": "🎨 الأربعاء · نشاطات ترفيهية (شاتو 78400)"}
+        status = {"fr": "🎨 Mercredi · Accueil de loisirs (Chatou 78400)", "en": "🎨 Wednesday · Leisure Center (Chatou 78400)", "ar": "🎨 الأربعاء · نشاطات ترفيهية (شاتو 78400)"}
     else:
-        return {"fr": "🏫 Jour de classe (Zone C · Yvelines)", "en": "🏫 School Day (Zone C · Yvelines)", "ar": "🏫 يوم دراسي (المنطقة C · إيفلين)"}
+        status = {"fr": "🏫 Jour de classe (Zone C · Yvelines)", "en": "🏫 School Day (Zone C · Yvelines)", "ar": "🏫 يوم دراسي (المنطقة C · إيفلين)"}
+
+    CALENDAR_CACHE["status"] = status
+    CALENDAR_CACHE["date_token"] = token
+    return status
 
 def interpret_wmo_code(code):
     wmo_map = {
@@ -81,8 +105,9 @@ def interpret_wmo_code(code):
 def get_chatou_weather():
     global WEATHER_CACHE
     now = datetime.datetime.now()
+
     if WEATHER_CACHE["data"] and WEATHER_CACHE["timestamp"]:
-        if (now - WEATHER_CACHE["timestamp"]).total_seconds() < 900:
+        if (now - WEATHER_CACHE["timestamp"]).total_seconds() < WEATHER_CACHE["ttl"]:
             return WEATHER_CACHE["data"]
 
     try:
@@ -93,7 +118,7 @@ def get_chatou_weather():
             f"daily=weather_code,temperature_2m_max,temperature_2m_min&"
             f"timezone=Europe%2FParis"
         )
-        res = requests.get(url, timeout=4)
+        res = requests.get(url, timeout=3)
         res.raise_for_status()
         data = res.json()
 
@@ -146,7 +171,7 @@ def extract_date_info_from_string(text):
 
 def find_active_school_pdf_url():
     """
-    Finds the latest/upcoming school menu PDF, filtering out crèche links.
+    Selects the upcoming school menu PDF link and strictly ignores crèches.
     """
     try:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
@@ -191,48 +216,8 @@ def find_active_school_pdf_url():
         print(f"[Scraper] Warning: {err}")
         return None, None, None
 
-def classify_dish(dish_name):
-    nl = dish_name.lower()
-    has_option = ('/' in dish_name or ' ou ' in nl)
-    
-    if any(k in nl for k in ['tortellini', 'lasagne', 'légumes', 'omelette', 'végé', 'vegetarien', 'sin carne']):
-        cat = "vegetarien"
-        badge_type = "green"
-        icon = "🌱"
-        badge_fr = "Végétarien"
-    elif any(k in nl for k in ['poisson', 'colin', 'saumon', 'cabillaud', 'merlu', 'meunière', 'lieu']):
-        cat = "poisson"
-        badge_type = "teal"
-        icon = "🐟"
-        badge_fr = "Poisson"
-    elif any(k in nl for k in ['poulet', 'dinde', 'volaille', 'cordon bleu', 'nuggets', 'canard']):
-        cat = "volaille"
-        badge_type = "yellow"
-        icon = "🍗"
-        badge_fr = "Volaille"
-    elif 'porc' in nl:
-        cat = "porc"
-        badge_type = "pink"
-        icon = "🥩"
-        badge_fr = "Porc"
-    else:
-        cat = "viande"
-        badge_type = "pink"
-        icon = "🥩"
-        badge_fr = "Viande"
-
-    return {
-        "cat": cat,
-        "badge_type": badge_type,
-        "icon": icon,
-        "badge_fr": f"{badge_fr} ?" if has_option else badge_fr,
-        "has_option": has_option
-    }
-
 def get_verified_multilingual_month_dataset():
-    """
-    Complete 25-meal schedule with full French, English, and Arabic content.
-    """
+    """Master verified 25-meal schedule with full FR, EN, AR support."""
     return [
         {
             "week_label_fr": "SEMAINE DU 28 SEPTEMBRE",
@@ -432,7 +417,7 @@ def get_verified_multilingual_month_dataset():
                 },
                 {
                     "day_short_fr": "MER", "day_short_en": "WED", "day_short_ar": "الأربعاء",
-                    "day_num": "21", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "أكتوبر",
+                    "day_num": "21", "month_fr": "OCT.", "month_en": "OCT.", "month_ar": "الأربعاء",
                     "date_fr": "Mercredi 21 Octobre", "date_en": "Wednesday, October 21", "date_ar": "الأربعاء 21 أكتوبر",
                     "plat_fr": "Chili sin carne bio", "plat_en": "Organic Vegetarian Chili", "plat_ar": "تشيلي نباتي عضوي",
                     "cat": "vegetarien", "badge_type": "green", "icon": "🌱",
@@ -522,10 +507,11 @@ def get_verified_multilingual_month_dataset():
     ]
 
 def update_menu_pipeline():
+    """Daily menu pipeline anchored to 00:05."""
     global MENU_CACHE
-    now = time.time()
+    token = get_current_day_token()
 
-    if MENU_CACHE["weeks"] and (now - MENU_CACHE["last_checked"]) < MENU_CACHE["ttl"]:
+    if MENU_CACHE["weeks"] and MENU_CACHE["date_token"] == token:
         return MENU_CACHE
 
     active_url, filename, month_title = find_active_school_pdf_url()
@@ -535,9 +521,44 @@ def update_menu_pipeline():
     MENU_CACHE["month_title"] = month_title or "Octobre 2026"
     MENU_CACHE["weeks"] = get_verified_multilingual_month_dataset()
     MENU_CACHE["stats"] = {"total_meals": 25, "poisson": 7, "vegetarien": 4, "volaille": 7, "viande_porc": 7}
-    MENU_CACHE["last_checked"] = now
+    MENU_CACHE["date_token"] = token
 
     return MENU_CACHE
+
+# --- Anti-Sleep Keep-Alive Engine ---
+def rush_hour_keep_alive_daemon():
+    """
+    Prevents Render free container from sleeping during specified rush hours:
+    - 07:00 to 09:00 (Morning school rush)
+    - 10:00 to 12:00 (Midday meal check)
+    - 22:00 to 24:00 (Night evening check)
+    Pings every 8 minutes.
+    """
+    time.sleep(20)  # Initial boot grace period
+    while True:
+        try:
+            # Calculate current hour in France (UTC+1 winter / UTC+2 summer)
+            now_utc = datetime.datetime.now(datetime.timezone.utc)
+            # Estimate Paris offset (+2 in Oct, +1 in Nov)
+            is_summer_time = (3 <= now_utc.month < 10) or (now_utc.month == 10 and now_utc.day < 25)
+            paris_hour = (now_utc.hour + (2 if is_summer_time else 1)) % 24
+
+            is_rush_window = (7 <= paris_hour < 9) or (10 <= paris_hour < 12) or (22 <= paris_hour < 24)
+
+            if is_rush_window:
+                ext_url = os.environ.get('RENDER_EXTERNAL_URL')
+                target = f"{ext_url.rstrip('/')}/api/ping" if ext_url else "http://127.0.0.1:5000/api/ping"
+                requests.get(target, timeout=4)
+        except Exception:
+            pass
+        time.sleep(480)  # Sleep 8 minutes (Render sleeps at 15 minutes)
+
+keep_alive_thread = threading.Thread(target=rush_hour_keep_alive_daemon, daemon=True)
+keep_alive_thread.start()
+
+@app.route('/api/ping')
+def api_ping():
+    return jsonify({"status": "alive", "time": datetime.datetime.now().strftime("%H:%M:%S")})
 
 @app.route('/manifest.json')
 def serve_manifest():
